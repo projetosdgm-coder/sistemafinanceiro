@@ -1,8 +1,11 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
 import { DRE0 } from '../utils/seedData'
 
 const sb = supabase
+
+// Dispara o request sem bloquear a UI; loga erros silenciosamente
+const fire = (query) => query.then(({ error }) => { if (error) console.error('[db]', error) })
 
 const useStore = create((set, get) => ({
   userId: null,
@@ -17,7 +20,7 @@ const useStore = create((set, get) => ({
   categoriasCusto: [],
   comprovantes: [],
 
-  // ── Carrega todos os dados do Supabase após login ──────────────────────────
+  // Carrega todos os dados do Supabase apos login
   loadFromSupabase: async (userId) => {
     set({ userId })
     const [
@@ -44,6 +47,11 @@ const useStore = create((set, get) => ({
       sb.from('comprovantes').select('*').eq('user_id', userId),
     ])
 
+    // Garante que o row de perfis existe (usuarios criados via dashboard podem nao ter)
+    if (!perfil) {
+      await sb.from('perfis').upsert({ id: userId, restaurante: 'Meu Restaurante' })
+    }
+
     set({
       restaurante: perfil?.restaurante || 'Meu Restaurante',
       ingredientes: ingredientes || [],
@@ -58,36 +66,24 @@ const useStore = create((set, get) => ({
     })
   },
 
-  // ── Perfil ─────────────────────────────────────────────────────────────────
+  // Perfil
   setRestaurante: (restaurante) => {
     set({ restaurante })
     const { userId } = get()
-    if (userId) sb.from('perfis').update({ restaurante }).eq('id', userId)
+    if (userId) fire(sb.from('perfis').upsert({ id: userId, restaurante }))
   },
 
-  setApiKey: (api_key) => {
-    set({ apiKey: api_key })
-    const { userId } = get()
-    if (userId) sb.from('perfis').update({ api_key }).eq('id', userId)
-  },
-
-  setApiProvider: (api_provider) => {
-    set({ apiProvider: api_provider })
-    const { userId } = get()
-    if (userId) sb.from('perfis').update({ api_provider }).eq('id', userId)
-  },
-
-  // ── Ingredientes ───────────────────────────────────────────────────────────
+  // Ingredientes
   addIngrediente: (ing) => {
     set((s) => ({ ingredientes: [...s.ingredientes, ing] }))
     const { userId } = get()
-    if (userId) sb.from('ingredientes').insert({ ...ing, user_id: userId })
+    if (userId) fire(sb.from('ingredientes').insert({ ...ing, user_id: userId }))
   },
 
   updateIngrediente: (id, data) => {
     set((s) => ({ ingredientes: s.ingredientes.map((x) => x.id === id ? { ...x, ...data } : x) }))
     const { userId } = get()
-    if (userId) sb.from('ingredientes').update(data).eq('id', id).eq('user_id', userId)
+    if (userId) fire(sb.from('ingredientes').update(data).eq('id', id).eq('user_id', userId))
   },
 
   deleteIngrediente: (id) => {
@@ -97,20 +93,20 @@ const useStore = create((set, get) => ({
       estoque: s.estoque.filter((x) => x.ing_id !== id),
     }))
     const { userId } = get()
-    if (userId) sb.from('ingredientes').delete().eq('id', id).eq('user_id', userId)
+    if (userId) fire(sb.from('ingredientes').delete().eq('id', id).eq('user_id', userId))
   },
 
-  // ── Receitas ───────────────────────────────────────────────────────────────
+  // Receitas
   addReceita: (rec) => {
     set((s) => ({ receitas: [...s.receitas, rec] }))
     const { userId } = get()
-    if (userId) sb.from('receitas').insert({ ...rec, user_id: userId })
+    if (userId) fire(sb.from('receitas').insert({ ...rec, user_id: userId }))
   },
 
   updateReceita: (id, data) => {
     set((s) => ({ receitas: s.receitas.map((x) => x.id === id ? { ...x, ...data } : x) }))
     const { userId } = get()
-    if (userId) sb.from('receitas').update(data).eq('id', id).eq('user_id', userId)
+    if (userId) fire(sb.from('receitas').update(data).eq('id', id).eq('user_id', userId))
   },
 
   deleteReceita: (id) => {
@@ -120,14 +116,14 @@ const useStore = create((set, get) => ({
       vendas: s.vendas.filter((x) => x.prato_id !== id),
     }))
     const { userId } = get()
-    if (userId) sb.from('receitas').delete().eq('id', id).eq('user_id', userId)
+    if (userId) fire(sb.from('receitas').delete().eq('id', id).eq('user_id', userId))
   },
 
-  // ── Itens de Receita ───────────────────────────────────────────────────────
+  // Itens de Receita
   addReceitaItem: (item) => {
     set((s) => ({ receitaItens: [...s.receitaItens, item] }))
     const { userId } = get()
-    if (userId) sb.from('receita_itens').upsert({ ...item, user_id: userId })
+    if (userId) fire(sb.from('receita_itens').upsert({ ...item, user_id: userId }))
   },
 
   updateReceitaItem: (prato_id, ing_id, data) => {
@@ -137,8 +133,8 @@ const useStore = create((set, get) => ({
       ),
     }))
     const { userId } = get()
-    if (userId) sb.from('receita_itens').update(data)
-      .eq('prato_id', prato_id).eq('ing_id', ing_id).eq('user_id', userId)
+    if (userId) fire(sb.from('receita_itens').update(data)
+      .eq('prato_id', prato_id).eq('ing_id', ing_id).eq('user_id', userId))
   },
 
   deleteReceitaItem: (prato_id, ing_id) => {
@@ -148,11 +144,11 @@ const useStore = create((set, get) => ({
       ),
     }))
     const { userId } = get()
-    if (userId) sb.from('receita_itens').delete()
-      .eq('prato_id', prato_id).eq('ing_id', ing_id).eq('user_id', userId)
+    if (userId) fire(sb.from('receita_itens').delete()
+      .eq('prato_id', prato_id).eq('ing_id', ing_id).eq('user_id', userId))
   },
 
-  // ── Vendas ─────────────────────────────────────────────────────────────────
+  // Vendas
   updateVenda: (prato_id, qtd) => {
     set((s) => {
       const exists = s.vendas.find((x) => x.prato_id === prato_id)
@@ -163,69 +159,69 @@ const useStore = create((set, get) => ({
       }
     })
     const { userId } = get()
-    if (userId) sb.from('vendas').upsert({ prato_id, qtd, user_id: userId })
+    if (userId) fire(sb.from('vendas').upsert({ prato_id, qtd, user_id: userId }))
   },
 
-  // ── Estoque ────────────────────────────────────────────────────────────────
+  // Estoque
   addEstoque: (item) => {
     set((s) => ({ estoque: [...s.estoque, item] }))
     const { userId } = get()
-    if (userId) sb.from('estoque').upsert({ ...item, user_id: userId })
+    if (userId) fire(sb.from('estoque').upsert({ ...item, user_id: userId }))
   },
 
   updateEstoque: (ing_id, data) => {
     set((s) => ({ estoque: s.estoque.map((x) => x.ing_id === ing_id ? { ...x, ...data } : x) }))
     const { userId } = get()
-    if (userId) sb.from('estoque').update(data).eq('ing_id', ing_id).eq('user_id', userId)
+    if (userId) fire(sb.from('estoque').update(data).eq('ing_id', ing_id).eq('user_id', userId))
   },
 
   deleteEstoque: (ing_id) => {
     set((s) => ({ estoque: s.estoque.filter((x) => x.ing_id !== ing_id) }))
     const { userId } = get()
-    if (userId) sb.from('estoque').delete().eq('ing_id', ing_id).eq('user_id', userId)
+    if (userId) fire(sb.from('estoque').delete().eq('ing_id', ing_id).eq('user_id', userId))
   },
 
-  // ── Funcionários ───────────────────────────────────────────────────────────
+  // Funcionarios
   addFuncionario: (func) => {
     set((s) => ({ funcionarios: [...s.funcionarios, func] }))
     const { userId } = get()
-    if (userId) sb.from('funcionarios').insert({ ...func, user_id: userId })
+    if (userId) fire(sb.from('funcionarios').insert({ ...func, user_id: userId }))
   },
 
   updateFuncionario: (id, data) => {
     set((s) => ({ funcionarios: s.funcionarios.map((x) => x.id === id ? { ...x, ...data } : x) }))
     const { userId } = get()
-    if (userId) sb.from('funcionarios').update(data).eq('id', id).eq('user_id', userId)
+    if (userId) fire(sb.from('funcionarios').update(data).eq('id', id).eq('user_id', userId))
   },
 
   deleteFuncionario: (id) => {
     set((s) => ({ funcionarios: s.funcionarios.filter((x) => x.id !== id) }))
     const { userId } = get()
-    if (userId) sb.from('funcionarios').delete().eq('id', id).eq('user_id', userId)
+    if (userId) fire(sb.from('funcionarios').delete().eq('id', id).eq('user_id', userId))
   },
 
-  // ── DRE ────────────────────────────────────────────────────────────────────
+  // DRE
   updateDRE: (data) => {
     set((s) => ({ dre: { ...s.dre, ...data } }))
     const { userId } = get()
-    if (userId) sb.from('dre').upsert({ ...get().dre, ...data, user_id: userId })
+    if (userId) fire(sb.from('dre').upsert({ ...get().dre, ...data, user_id: userId }))
   },
 
-  // ── Categorias de Custo ────────────────────────────────────────────────────
+  // Categorias de Custo
   addCategoriaCusto: (cat) => {
     set((s) => ({ categoriasCusto: [...s.categoriasCusto, cat] }))
     const { userId } = get()
-    if (userId) sb.from('categorias_custo').insert({ ...cat, user_id: userId })
+    if (userId) fire(sb.from('categorias_custo').insert({ ...cat, user_id: userId }))
   },
 
-  // ── Comprovantes ───────────────────────────────────────────────────────────
+  // Comprovantes
   addComprovante: (comp) => {
     set((s) => ({ comprovantes: [...s.comprovantes, comp] }))
     const { userId } = get()
-    if (userId) sb.from('comprovantes').insert({ ...comp, user_id: userId })
+    if (userId) fire(sb.from('comprovantes').insert({ ...comp, user_id: userId }))
   },
 
-  // ── Backup ─────────────────────────────────────────────────────────────────
+  // Backup
   exportBackup: () => {
     const s = get()
     const data = {
@@ -256,7 +252,7 @@ const useStore = create((set, get) => ({
       try {
         const data = JSON.parse(e.target.result)
         const keys = ['ingredientes', 'receitas', 'receitaItens', 'vendas', 'estoque', 'funcionarios', 'dre']
-        if (!keys.every((k) => k in data)) throw new Error('inválido')
+        if (!keys.every((k) => k in data)) throw new Error('invalido')
 
         const { userId } = get()
         set({
@@ -272,7 +268,7 @@ const useStore = create((set, get) => ({
 
         if (userId) {
           await Promise.all([
-            sb.from('perfis').update({ restaurante: data.restaurante || 'Meu Restaurante' }).eq('id', userId),
+            sb.from('perfis').upsert({ id: userId, restaurante: data.restaurante || 'Meu Restaurante' }),
             data.ingredientes.length && sb.from('ingredientes').delete().eq('user_id', userId),
             data.receitas.length && sb.from('receitas').delete().eq('user_id', userId),
             data.vendas.length && sb.from('vendas').delete().eq('user_id', userId),
@@ -290,7 +286,7 @@ const useStore = create((set, get) => ({
           ])
         }
       } catch {
-        alert('Arquivo de backup inválido ou corrompido.')
+        alert('Arquivo de backup invalido ou corrompido.')
       }
     }
     reader.readAsText(file)
