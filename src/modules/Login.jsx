@@ -48,11 +48,11 @@ export default function Login() {
       }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ color: C.amarelo, fontWeight: 800, fontSize: 28, letterSpacing: 2 }}>
-            ALPHA
+          <div style={{ color: C.amarelo, fontWeight: 800, fontSize: 20, letterSpacing: 2 }}>
+            SISTEMA FINANCEIRO
           </div>
           <div style={{ color: '#555', fontSize: 12, marginTop: 4 }}>
-            Sistema Financeiro
+            Gestão de Restaurante
           </div>
         </div>
 

@@ -61,7 +61,7 @@ export function exportDREExcel(store) {
   ]
 
   const workbook = wb([{ name: 'DRE', data }])
-  writeFile(workbook, 'DRE_Alpha.xlsx')
+  writeFile(workbook, 'DRE.xlsx')
 }
 
 export function exportCMVExcel(store) {
@@ -109,5 +109,5 @@ export function exportCMVExcel(store) {
   ]
 
   const workbook = wb([{ name: 'CMV', data }])
-  writeFile(workbook, 'CMV_Alpha.xlsx')
+  writeFile(workbook, 'CMV.xlsx')
 }

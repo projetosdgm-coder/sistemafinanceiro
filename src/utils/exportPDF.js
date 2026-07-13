@@ -10,11 +10,11 @@ function header(doc, restaurante, titulo) {
   doc.setTextColor(255, 193, 7)
   doc.setFontSize(13)
   doc.setFont('helvetica', 'bold')
-  doc.text('ALPHA', 14, 10)
+  doc.text('SISTEMA FINANCEIRO', 14, 10)
   doc.setTextColor(200, 200, 200)
   doc.setFontSize(8)
   doc.setFont('helvetica', 'normal')
-  doc.text('Sistema Financeiro', 14, 15)
+  doc.text('Gestão de Restaurante', 14, 15)
   doc.setTextColor(255, 255, 255)
   doc.setFontSize(11)
   doc.setFont('helvetica', 'bold')
@@ -111,7 +111,7 @@ export function exportDashboardPDF(store, restaurante) {
     margin: { left: 14, right: 14 },
   })
 
-  doc.save('Dashboard_Alpha.pdf')
+  doc.save('Dashboard.pdf')
 }
 
 export function exportDREPDF(store, restaurante) {
@@ -172,5 +172,5 @@ export function exportDREPDF(store, restaurante) {
     margin: { left: 14, right: 14 },
   })
 
-  doc.save('DRE_Alpha.pdf')
+  doc.save('DRE.pdf')
 }

@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create *)",
+      "Bash(npx create-vite@latest . --template react)",
+      "Bash(npx create-vite@latest --help)",
+      "Bash(npx create-vite@latest . --template react --overwrite)",
+      "Bash(npm install *)",
+      "Bash(find /mnt/c/Alpha/SistemaFinanceiro -name \"*.html\" 2>/dev/null)",
+      "Bash(ls \"C:\\\\\\\\Alpha\\\\\\\\SistemaFinanceiro\")",
+      "Bash(npm run *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(Get-Content package.json)",
+      "Bash(pkill -f \"vite\")",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
+    ]
+  }
+}

@@ -245,7 +245,7 @@ const useStore = create((set, get) => ({
     const a = document.createElement('a')
     a.href = url
     const hoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')
-    a.download = `backup_alpha_${hoje}.json`
+    a.download = `backup_${hoje}.json`
     a.click()
     URL.revokeObjectURL(url)
   },

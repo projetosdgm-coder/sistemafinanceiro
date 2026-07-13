@@ -40,7 +40,7 @@ export default function App() {
         minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: C.sidebar, color: C.amarelo, fontSize: 18, fontWeight: 700, letterSpacing: 2,
       }}>
-        ALPHA
+        SISTEMA FINANCEIRO
       </div>
     )
   }

@@ -43,11 +43,11 @@ export default function Sidebar({ active, onNav, onLogout }) {
     }}>
       {/* Logo + Nome do restaurante */}
       <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #2a2a2a' }}>
-        <div style={{ color: C.amarelo, fontWeight: 700, fontSize: 15, letterSpacing: 1 }}>
-          ALPHA
+        <div style={{ color: C.amarelo, fontWeight: 700, fontSize: 13, letterSpacing: 1 }}>
+          SISTEMA FINANCEIRO
         </div>
         <div style={{ color: C.cinza3, fontSize: 11, marginTop: 2, marginBottom: 10 }}>
-          Sistema Financeiro
+          Gestão de Restaurante
         </div>
 
         {editingNome ? (
@@ -148,7 +148,7 @@ export default function Sidebar({ active, onNav, onLogout }) {
         >
           Sair da conta
         </button>
-        <div style={{ color: '#333', fontSize: 10 }}>v3.0 · Sistema Financeiro Alpha</div>
+        <div style={{ color: '#333', fontSize: 10 }}>v3.0 · Sistema Financeiro</div>
       </div>
     </aside>
   )
