@@ -11,7 +11,8 @@ const ITEMS = [
   { id: 'cmo',          label: 'CMO',            icon: '👥' },
   { id: 'cmv',          label: 'CMV',            icon: '📉' },
   { id: 'dre',          label: 'DRE',            icon: '📑' },
-  { id: 'nf',           label: 'Nota Fiscal IA', icon: '🧾', destaque: true },
+  { id: 'nf',           label: 'Nota Fiscal IA',   icon: '🧾', destaque: true },
+  { id: 'comprovante',  label: 'Comprovantes',     icon: '💳', destaque: true },
 ]
 
 export default function Sidebar({ active, onNav, onLogout }) {

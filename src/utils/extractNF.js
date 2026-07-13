@@ -21,7 +21,25 @@ function isHEIC(file) {
   )
 }
 
-function buildPrompt(ingredientes) {
+async function chamarAPI(base64, mimeType, prompt, isPDF = false) {
+  const res = await fetch('/api/analisar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ base64, mimeType, prompt, isPDF }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error?.message || err.error || `Erro ${res.status}`)
+  }
+  const data = await res.json()
+  const text = data.content?.[0]?.text
+  if (!text) throw new Error('IA não retornou resposta')
+  const match = text.match(/\{[\s\S]*\}/)
+  if (!match) throw new Error('IA não retornou um JSON válido')
+  return JSON.parse(match[0])
+}
+
+function buildPromptNF(ingredientes) {
   const lista = ingredientes
     .map(i => `  ${i.id}: "${i.nome}" (${i.un}) — R$ ${i.preco.toFixed(2)}`)
     .join('\n')
@@ -57,92 +75,36 @@ Regras:
 - Use ponto decimal nos números (sem R$ ou vírgulas)`
 }
 
-// ── Google Gemini (GRATUITO) ──────────────────────────────────────────────────
-async function analisarGemini(file, apiKey, ingredientes) {
-  // Gemini suporta HEIC nativamente — sem conversão necessária
-  const mimeType = isHEIC(file)
-    ? 'image/heic'
-    : file.type || 'application/octet-stream'
+function buildPromptComprovante() {
+  return `Você é especialista em análise de comprovantes de pagamento brasileiros (PIX, boleto, transferência).
 
-  const base64 = await fileToBase64(file)
-  const prompt  = buildPrompt(ingredientes)
+Analise este comprovante e extraia as informações do pagamento.
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { inline_data: { mime_type: mimeType, data: base64 } },
-            { text: prompt },
-          ],
-        }],
-        generationConfig: { temperature: 0.1 },
-      }),
-    }
-  )
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.error?.message || `Erro ${res.status} na API Gemini`)
-  }
-
-  const data = await res.json()
-  const text  = data.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!text) throw new Error('Gemini não retornou resposta')
-  const match = text.match(/\{[\s\S]*\}/)
-  return JSON.parse(match ? match[0] : text)
+Retorne APENAS um JSON válido neste formato:
+{
+  "valor": 1500.00,
+  "data": "DD/MM/AAAA",
+  "descricao": "descrição ou destinatário do pagamento",
+  "tipo": "PIX"
 }
 
-// ── Anthropic Claude (Pago) ───────────────────────────────────────────────────
-async function analisarAnthropic(file, apiKey, ingredientes) {
+Regras:
+- Use ponto decimal nos valores (sem R$ ou vírgulas)
+- tipo pode ser: PIX, boleto, transferência, débito, outros
+- Se não encontrar algum campo, use null
+- Extraia o valor principal do pagamento (não o saldo da conta)`
+}
+
+export async function analisarNF(file, ingredientes) {
   if (isHEIC(file)) file = await converterHEIC(file)
-
-  const isPDF   = file.type === 'application/pdf'
-  const base64  = await fileToBase64(file)
-  const prompt  = buildPrompt(ingredientes)
-
-  const mediaType  = isPDF ? 'application/pdf' : file.type
-  const bloco = isPDF
-    ? { type: 'document', source: { type: 'base64', media_type: mediaType, data: base64 } }
-    : { type: 'image',    source: { type: 'base64', media_type: mediaType, data: base64 } }
-
-  const headers = {
-    'Content-Type': 'application/json',
-    'x-api-key': apiKey,
-    'anthropic-version': '2023-06-01',
-    'anthropic-dangerous-direct-browser-access': 'true',
-  }
-  if (isPDF) headers['anthropic-beta'] = 'pdfs-2024-09-25'
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2048,
-      messages: [{ role: 'user', content: [bloco, { type: 'text', text: prompt }] }],
-    }),
-  })
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.error?.message || `Erro ${res.status} na API Anthropic`)
-  }
-
-  const data  = await res.json()
-  const text  = data.content[0].text
-  const match = text.match(/\{[\s\S]*\}/)
-  if (!match) throw new Error('Claude não retornou um JSON válido')
-  return JSON.parse(match[0])
+  const isPDF  = file.type === 'application/pdf'
+  const base64 = await fileToBase64(file)
+  return chamarAPI(base64, isPDF ? 'application/pdf' : file.type, buildPromptNF(ingredientes), isPDF)
 }
 
-// ── Exportação principal ──────────────────────────────────────────────────────
-export async function analisarNF(file, apiKey, apiProvider, ingredientes) {
-  if (apiProvider === 'gemini') {
-    return analisarGemini(file, apiKey, ingredientes)
-  }
-  return analisarAnthropic(file, apiKey, ingredientes)
+export async function analisarComprovante(file) {
+  if (isHEIC(file)) file = await converterHEIC(file)
+  const isPDF  = file.type === 'application/pdf'
+  const base64 = await fileToBase64(file)
+  return chamarAPI(base64, isPDF ? 'application/pdf' : file.type, buildPromptComprovante(), isPDF)
 }

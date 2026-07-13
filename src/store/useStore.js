@@ -7,8 +7,6 @@ const sb = supabase
 const useStore = create((set, get) => ({
   userId: null,
   restaurante: 'Meu Restaurante',
-  apiKey: '',
-  apiProvider: 'gemini',
   ingredientes: [],
   receitas: [],
   receitaItens: [],
@@ -16,6 +14,8 @@ const useStore = create((set, get) => ({
   estoque: [],
   funcionarios: [],
   dre: DRE0,
+  categoriasCusto: [],
+  comprovantes: [],
 
   // ── Carrega todos os dados do Supabase após login ──────────────────────────
   loadFromSupabase: async (userId) => {
@@ -29,6 +29,8 @@ const useStore = create((set, get) => ({
       { data: estoque },
       { data: funcionarios },
       { data: dre },
+      { data: categoriasCusto },
+      { data: comprovantes },
     ] = await Promise.all([
       sb.from('perfis').select('*').eq('id', userId).single(),
       sb.from('ingredientes').select('*').eq('user_id', userId),
@@ -38,12 +40,12 @@ const useStore = create((set, get) => ({
       sb.from('estoque').select('*').eq('user_id', userId),
       sb.from('funcionarios').select('*').eq('user_id', userId),
       sb.from('dre').select('*').eq('user_id', userId).single(),
+      sb.from('categorias_custo').select('*').eq('user_id', userId),
+      sb.from('comprovantes').select('*').eq('user_id', userId),
     ])
 
     set({
       restaurante: perfil?.restaurante || 'Meu Restaurante',
-      apiKey: perfil?.api_key || '',
-      apiProvider: perfil?.api_provider || 'gemini',
       ingredientes: ingredientes || [],
       receitas: receitas || [],
       receitaItens: receitaItens || [],
@@ -51,6 +53,8 @@ const useStore = create((set, get) => ({
       estoque: estoque || [],
       funcionarios: funcionarios || [],
       dre: dre ? { ...DRE0, ...dre } : DRE0,
+      categoriasCusto: categoriasCusto || [],
+      comprovantes: comprovantes || [],
     })
   },
 
@@ -205,6 +209,20 @@ const useStore = create((set, get) => ({
     set((s) => ({ dre: { ...s.dre, ...data } }))
     const { userId } = get()
     if (userId) sb.from('dre').upsert({ ...get().dre, ...data, user_id: userId })
+  },
+
+  // ── Categorias de Custo ────────────────────────────────────────────────────
+  addCategoriaCusto: (cat) => {
+    set((s) => ({ categoriasCusto: [...s.categoriasCusto, cat] }))
+    const { userId } = get()
+    if (userId) sb.from('categorias_custo').insert({ ...cat, user_id: userId })
+  },
+
+  // ── Comprovantes ───────────────────────────────────────────────────────────
+  addComprovante: (comp) => {
+    set((s) => ({ comprovantes: [...s.comprovantes, comp] }))
+    const { userId } = get()
+    if (userId) sb.from('comprovantes').insert({ ...comp, user_id: userId })
   },
 
   // ── Backup ─────────────────────────────────────────────────────────────────

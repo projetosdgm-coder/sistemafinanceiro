@@ -12,7 +12,8 @@ import Estoque      from './modules/Estoque'
 import CMO          from './modules/CMO'
 import CMV          from './modules/CMV'
 import DRE          from './modules/DRE'
-import LancamentoNF from './modules/LancamentoNF'
+import LancamentoNF          from './modules/LancamentoNF'
+import LancamentoComprovante from './modules/LancamentoComprovante'
 
 export default function App() {
   const [session, setSession] = useState(undefined) // undefined = carregando
@@ -56,6 +57,7 @@ export default function App() {
     cmv:          <CMV />,
     dre:          <DRE />,
     nf:           <LancamentoNF onNav={setActive} />,
+    comprovante:  <LancamentoComprovante onNav={setActive} />,
   }
 
   return (
