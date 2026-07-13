@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { C } from '../styles/tokens'
 
 export default function Login() {
-  const [modo, setModo] = useState('login') // login | cadastro | recuperar
+  const [modo, setModo] = useState('login') // login | recuperar
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [loading, setLoading] = useState(false)
@@ -20,20 +20,12 @@ export default function Login() {
     setLoading(false)
   }
 
-  const handleCadastro = async () => {
-    if (!email || !senha) { setErro('Preencha e-mail e senha.'); return }
-    if (senha.length < 6) { setErro('A senha deve ter pelo menos 6 caracteres.'); return }
-    setLoading(true); reset()
-    const { error } = await supabase.auth.signUp({ email, password: senha })
-    if (error) setErro(traduzErro(error.message))
-    else setMsg('Conta criada! Verifique seu e-mail para confirmar o acesso.')
-    setLoading(false)
-  }
-
   const handleRecuperar = async () => {
     if (!email) { setErro('Informe seu e-mail.'); return }
     setLoading(true); reset()
-    const { error } = await supabase.auth.resetPasswordForEmail(email)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    })
     if (error) setErro(traduzErro(error.message))
     else setMsg('E-mail de recuperação enviado. Verifique sua caixa de entrada.')
     setLoading(false)
@@ -42,7 +34,6 @@ export default function Login() {
   const onEnter = (e) => {
     if (e.key !== 'Enter') return
     if (modo === 'login') handleLogin()
-    else if (modo === 'cadastro') handleCadastro()
     else handleRecuperar()
   }
 
@@ -123,16 +114,11 @@ export default function Login() {
         {/* Links de alternância */}
         <div style={{ marginTop: 20, textAlign: 'center', fontSize: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {modo === 'login' && (
-            <>
-              <button onClick={() => { setModo('cadastro'); reset() }} style={linkS}>
-                Não tem conta? Criar agora
-              </button>
-              <button onClick={() => { setModo('recuperar'); reset() }} style={{ ...linkS, color: '#555' }}>
-                Esqueci minha senha
-              </button>
-            </>
+            <button onClick={() => { setModo('recuperar'); reset() }} style={{ ...linkS, color: '#555' }}>
+              Esqueci minha senha
+            </button>
           )}
-          {(modo === 'cadastro' || modo === 'recuperar') && (
+          {modo === 'recuperar' && (
             <button onClick={() => { setModo('login'); reset() }} style={linkS}>
               ← Voltar para o login
             </button>
