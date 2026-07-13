@@ -1,185 +1,282 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { ING0, REC0, RITENS0, VENDAS0, EST0, EMP0, DRE0 } from "../utils/seedData";
+import { create } from 'zustand'
+import { supabase } from '../lib/supabase'
+import { DRE0 } from '../utils/seedData'
 
-const useStore = create(
-  persist(
-    (set, get) => ({
-      restaurante: "Meu Restaurante",
-      apiKey: "",
-      apiProvider: "gemini",
+const sb = supabase
 
-      setApiKey: (key) => set({ apiKey: key }),
-      setApiProvider: (provider) => set({ apiProvider: provider }),
-      ingredientes: ING0,
-      receitas: REC0,
-      receitaItens: RITENS0,
-      vendas: VENDAS0,
-      estoque: EST0,
-      funcionarios: EMP0,
-      dre: DRE0,
+const useStore = create((set, get) => ({
+  userId: null,
+  restaurante: 'Meu Restaurante',
+  apiKey: '',
+  apiProvider: 'gemini',
+  ingredientes: [],
+  receitas: [],
+  receitaItens: [],
+  vendas: [],
+  estoque: [],
+  funcionarios: [],
+  dre: DRE0,
 
-      setRestaurante: (nome) => set({ restaurante: nome }),
+  // ── Carrega todos os dados do Supabase após login ──────────────────────────
+  loadFromSupabase: async (userId) => {
+    set({ userId })
+    const [
+      { data: perfil },
+      { data: ingredientes },
+      { data: receitas },
+      { data: receitaItens },
+      { data: vendas },
+      { data: estoque },
+      { data: funcionarios },
+      { data: dre },
+    ] = await Promise.all([
+      sb.from('perfis').select('*').eq('id', userId).single(),
+      sb.from('ingredientes').select('*').eq('user_id', userId),
+      sb.from('receitas').select('*').eq('user_id', userId),
+      sb.from('receita_itens').select('*').eq('user_id', userId),
+      sb.from('vendas').select('*').eq('user_id', userId),
+      sb.from('estoque').select('*').eq('user_id', userId),
+      sb.from('funcionarios').select('*').eq('user_id', userId),
+      sb.from('dre').select('*').eq('user_id', userId).single(),
+    ])
 
-      // ── Ingredientes ──
-      addIngrediente: (ing) =>
-        set((s) => ({ ingredientes: [...s.ingredientes, ing] })),
-      updateIngrediente: (id, data) =>
-        set((s) => ({
-          ingredientes: s.ingredientes.map((x) =>
-            x.id === id ? { ...x, ...data } : x
-          ),
-        })),
-      deleteIngrediente: (id) =>
-        set((s) => ({
-          ingredientes: s.ingredientes.filter((x) => x.id !== id),
-          receitaItens: s.receitaItens.filter((x) => x.ing_id !== id),
-          estoque: s.estoque.filter((x) => x.ing_id !== id),
-        })),
+    set({
+      restaurante: perfil?.restaurante || 'Meu Restaurante',
+      apiKey: perfil?.api_key || '',
+      apiProvider: perfil?.api_provider || 'gemini',
+      ingredientes: ingredientes || [],
+      receitas: receitas || [],
+      receitaItens: receitaItens || [],
+      vendas: vendas || [],
+      estoque: estoque || [],
+      funcionarios: funcionarios || [],
+      dre: dre ? { ...DRE0, ...dre } : DRE0,
+    })
+  },
 
-      // ── Receitas ──
-      addReceita: (rec) =>
-        set((s) => ({ receitas: [...s.receitas, rec] })),
-      updateReceita: (id, data) =>
-        set((s) => ({
-          receitas: s.receitas.map((x) =>
-            x.id === id ? { ...x, ...data } : x
-          ),
-        })),
-      deleteReceita: (id) =>
-        set((s) => ({
-          receitas: s.receitas.filter((x) => x.id !== id),
-          receitaItens: s.receitaItens.filter((x) => x.prato_id !== id),
-          vendas: s.vendas.filter((x) => x.prato_id !== id),
-        })),
+  // ── Perfil ─────────────────────────────────────────────────────────────────
+  setRestaurante: (restaurante) => {
+    set({ restaurante })
+    const { userId } = get()
+    if (userId) sb.from('perfis').update({ restaurante }).eq('id', userId)
+  },
 
-      // ── Itens de Receita ──
-      addReceitaItem: (item) =>
-        set((s) => ({ receitaItens: [...s.receitaItens, item] })),
-      updateReceitaItem: (prato_id, ing_id, data) =>
-        set((s) => ({
-          receitaItens: s.receitaItens.map((x) =>
-            x.prato_id === prato_id && x.ing_id === ing_id
-              ? { ...x, ...data }
-              : x
-          ),
-        })),
-      deleteReceitaItem: (prato_id, ing_id) =>
-        set((s) => ({
-          receitaItens: s.receitaItens.filter(
-            (x) => !(x.prato_id === prato_id && x.ing_id === ing_id)
-          ),
-        })),
+  setApiKey: (api_key) => {
+    set({ apiKey: api_key })
+    const { userId } = get()
+    if (userId) sb.from('perfis').update({ api_key }).eq('id', userId)
+  },
 
-      // ── Vendas ──
-      updateVenda: (prato_id, qtd) =>
-        set((s) => {
-          const exists = s.vendas.find((x) => x.prato_id === prato_id);
-          if (exists) {
-            return {
-              vendas: s.vendas.map((x) =>
-                x.prato_id === prato_id ? { ...x, qtd } : x
-              ),
-            };
-          }
-          return { vendas: [...s.vendas, { prato_id, qtd }] };
-        }),
+  setApiProvider: (api_provider) => {
+    set({ apiProvider: api_provider })
+    const { userId } = get()
+    if (userId) sb.from('perfis').update({ api_provider }).eq('id', userId)
+  },
 
-      // ── Estoque ──
-      addEstoque: (item) =>
-        set((s) => ({ estoque: [...s.estoque, item] })),
-      updateEstoque: (ing_id, data) =>
-        set((s) => ({
-          estoque: s.estoque.map((x) =>
-            x.ing_id === ing_id ? { ...x, ...data } : x
-          ),
-        })),
-      deleteEstoque: (ing_id) =>
-        set((s) => ({
-          estoque: s.estoque.filter((x) => x.ing_id !== ing_id),
-        })),
+  // ── Ingredientes ───────────────────────────────────────────────────────────
+  addIngrediente: (ing) => {
+    set((s) => ({ ingredientes: [...s.ingredientes, ing] }))
+    const { userId } = get()
+    if (userId) sb.from('ingredientes').insert({ ...ing, user_id: userId })
+  },
 
-      // ── Funcionários ──
-      addFuncionario: (func) =>
-        set((s) => ({ funcionarios: [...s.funcionarios, func] })),
-      updateFuncionario: (id, data) =>
-        set((s) => ({
-          funcionarios: s.funcionarios.map((x) =>
-            x.id === id ? { ...x, ...data } : x
-          ),
-        })),
-      deleteFuncionario: (id) =>
-        set((s) => ({
-          funcionarios: s.funcionarios.filter((x) => x.id !== id),
-        })),
+  updateIngrediente: (id, data) => {
+    set((s) => ({ ingredientes: s.ingredientes.map((x) => x.id === id ? { ...x, ...data } : x) }))
+    const { userId } = get()
+    if (userId) sb.from('ingredientes').update(data).eq('id', id).eq('user_id', userId)
+  },
 
-      // ── DRE ──
-      updateDRE: (data) =>
-        set((s) => ({ dre: { ...s.dre, ...data } })),
+  deleteIngrediente: (id) => {
+    set((s) => ({
+      ingredientes: s.ingredientes.filter((x) => x.id !== id),
+      receitaItens: s.receitaItens.filter((x) => x.ing_id !== id),
+      estoque: s.estoque.filter((x) => x.ing_id !== id),
+    }))
+    const { userId } = get()
+    if (userId) sb.from('ingredientes').delete().eq('id', id).eq('user_id', userId)
+  },
 
-      // ── Reset ──
-      resetDados: () =>
+  // ── Receitas ───────────────────────────────────────────────────────────────
+  addReceita: (rec) => {
+    set((s) => ({ receitas: [...s.receitas, rec] }))
+    const { userId } = get()
+    if (userId) sb.from('receitas').insert({ ...rec, user_id: userId })
+  },
+
+  updateReceita: (id, data) => {
+    set((s) => ({ receitas: s.receitas.map((x) => x.id === id ? { ...x, ...data } : x) }))
+    const { userId } = get()
+    if (userId) sb.from('receitas').update(data).eq('id', id).eq('user_id', userId)
+  },
+
+  deleteReceita: (id) => {
+    set((s) => ({
+      receitas: s.receitas.filter((x) => x.id !== id),
+      receitaItens: s.receitaItens.filter((x) => x.prato_id !== id),
+      vendas: s.vendas.filter((x) => x.prato_id !== id),
+    }))
+    const { userId } = get()
+    if (userId) sb.from('receitas').delete().eq('id', id).eq('user_id', userId)
+  },
+
+  // ── Itens de Receita ───────────────────────────────────────────────────────
+  addReceitaItem: (item) => {
+    set((s) => ({ receitaItens: [...s.receitaItens, item] }))
+    const { userId } = get()
+    if (userId) sb.from('receita_itens').upsert({ ...item, user_id: userId })
+  },
+
+  updateReceitaItem: (prato_id, ing_id, data) => {
+    set((s) => ({
+      receitaItens: s.receitaItens.map((x) =>
+        x.prato_id === prato_id && x.ing_id === ing_id ? { ...x, ...data } : x
+      ),
+    }))
+    const { userId } = get()
+    if (userId) sb.from('receita_itens').update(data)
+      .eq('prato_id', prato_id).eq('ing_id', ing_id).eq('user_id', userId)
+  },
+
+  deleteReceitaItem: (prato_id, ing_id) => {
+    set((s) => ({
+      receitaItens: s.receitaItens.filter(
+        (x) => !(x.prato_id === prato_id && x.ing_id === ing_id)
+      ),
+    }))
+    const { userId } = get()
+    if (userId) sb.from('receita_itens').delete()
+      .eq('prato_id', prato_id).eq('ing_id', ing_id).eq('user_id', userId)
+  },
+
+  // ── Vendas ─────────────────────────────────────────────────────────────────
+  updateVenda: (prato_id, qtd) => {
+    set((s) => {
+      const exists = s.vendas.find((x) => x.prato_id === prato_id)
+      return {
+        vendas: exists
+          ? s.vendas.map((x) => x.prato_id === prato_id ? { ...x, qtd } : x)
+          : [...s.vendas, { prato_id, qtd }],
+      }
+    })
+    const { userId } = get()
+    if (userId) sb.from('vendas').upsert({ prato_id, qtd, user_id: userId })
+  },
+
+  // ── Estoque ────────────────────────────────────────────────────────────────
+  addEstoque: (item) => {
+    set((s) => ({ estoque: [...s.estoque, item] }))
+    const { userId } = get()
+    if (userId) sb.from('estoque').upsert({ ...item, user_id: userId })
+  },
+
+  updateEstoque: (ing_id, data) => {
+    set((s) => ({ estoque: s.estoque.map((x) => x.ing_id === ing_id ? { ...x, ...data } : x) }))
+    const { userId } = get()
+    if (userId) sb.from('estoque').update(data).eq('ing_id', ing_id).eq('user_id', userId)
+  },
+
+  deleteEstoque: (ing_id) => {
+    set((s) => ({ estoque: s.estoque.filter((x) => x.ing_id !== ing_id) }))
+    const { userId } = get()
+    if (userId) sb.from('estoque').delete().eq('ing_id', ing_id).eq('user_id', userId)
+  },
+
+  // ── Funcionários ───────────────────────────────────────────────────────────
+  addFuncionario: (func) => {
+    set((s) => ({ funcionarios: [...s.funcionarios, func] }))
+    const { userId } = get()
+    if (userId) sb.from('funcionarios').insert({ ...func, user_id: userId })
+  },
+
+  updateFuncionario: (id, data) => {
+    set((s) => ({ funcionarios: s.funcionarios.map((x) => x.id === id ? { ...x, ...data } : x) }))
+    const { userId } = get()
+    if (userId) sb.from('funcionarios').update(data).eq('id', id).eq('user_id', userId)
+  },
+
+  deleteFuncionario: (id) => {
+    set((s) => ({ funcionarios: s.funcionarios.filter((x) => x.id !== id) }))
+    const { userId } = get()
+    if (userId) sb.from('funcionarios').delete().eq('id', id).eq('user_id', userId)
+  },
+
+  // ── DRE ────────────────────────────────────────────────────────────────────
+  updateDRE: (data) => {
+    set((s) => ({ dre: { ...s.dre, ...data } }))
+    const { userId } = get()
+    if (userId) sb.from('dre').upsert({ ...get().dre, ...data, user_id: userId })
+  },
+
+  // ── Backup ─────────────────────────────────────────────────────────────────
+  exportBackup: () => {
+    const s = get()
+    const data = {
+      version: 2,
+      exportedAt: new Date().toISOString(),
+      restaurante: s.restaurante,
+      ingredientes: s.ingredientes,
+      receitas: s.receitas,
+      receitaItens: s.receitaItens,
+      vendas: s.vendas,
+      estoque: s.estoque,
+      funcionarios: s.funcionarios,
+      dre: s.dre,
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    const hoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')
+    a.download = `backup_alpha_${hoje}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  },
+
+  importBackup: (file) => {
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      try {
+        const data = JSON.parse(e.target.result)
+        const keys = ['ingredientes', 'receitas', 'receitaItens', 'vendas', 'estoque', 'funcionarios', 'dre']
+        if (!keys.every((k) => k in data)) throw new Error('inválido')
+
+        const { userId } = get()
         set({
-          ingredientes: ING0,
-          receitas: REC0,
-          receitaItens: RITENS0,
-          vendas: VENDAS0,
-          estoque: EST0,
-          funcionarios: EMP0,
-          dre: DRE0,
-        }),
+          restaurante: data.restaurante || 'Meu Restaurante',
+          ingredientes: data.ingredientes,
+          receitas: data.receitas,
+          receitaItens: data.receitaItens,
+          vendas: data.vendas,
+          estoque: data.estoque,
+          funcionarios: data.funcionarios,
+          dre: data.dre,
+        })
 
-      // ── Backup ──
-      exportBackup: () => {
-        const s = get()
-        const data = {
-          version: 2,
-          exportedAt: new Date().toISOString(),
-          restaurante: s.restaurante,
-          ingredientes: s.ingredientes,
-          receitas: s.receitas,
-          receitaItens: s.receitaItens,
-          vendas: s.vendas,
-          estoque: s.estoque,
-          funcionarios: s.funcionarios,
-          dre: s.dre,
+        if (userId) {
+          await Promise.all([
+            sb.from('perfis').update({ restaurante: data.restaurante || 'Meu Restaurante' }).eq('id', userId),
+            data.ingredientes.length && sb.from('ingredientes').delete().eq('user_id', userId),
+            data.receitas.length && sb.from('receitas').delete().eq('user_id', userId),
+            data.vendas.length && sb.from('vendas').delete().eq('user_id', userId),
+            data.estoque.length && sb.from('estoque').delete().eq('user_id', userId),
+            data.funcionarios.length && sb.from('funcionarios').delete().eq('user_id', userId),
+          ])
+          await Promise.all([
+            data.ingredientes.length && sb.from('ingredientes').insert(data.ingredientes.map(x => ({ ...x, user_id: userId }))),
+            data.receitas.length && sb.from('receitas').insert(data.receitas.map(x => ({ ...x, user_id: userId }))),
+            data.receitaItens.length && sb.from('receita_itens').insert(data.receitaItens.map(x => ({ ...x, user_id: userId }))),
+            data.vendas.length && sb.from('vendas').insert(data.vendas.map(x => ({ ...x, user_id: userId }))),
+            data.estoque.length && sb.from('estoque').insert(data.estoque.map(x => ({ ...x, user_id: userId }))),
+            data.funcionarios.length && sb.from('funcionarios').insert(data.funcionarios.map(x => ({ ...x, user_id: userId }))),
+            sb.from('dre').upsert({ ...data.dre, user_id: userId }),
+          ])
         }
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        const hoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')
-        a.download = `backup_alpha_${hoje}.json`
-        a.click()
-        URL.revokeObjectURL(url)
-      },
+      } catch {
+        alert('Arquivo de backup inválido ou corrompido.')
+      }
+    }
+    reader.readAsText(file)
+  },
+}))
 
-      importBackup: (file) => {
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          try {
-            const data = JSON.parse(e.target.result)
-            const keys = ['ingredientes', 'receitas', 'receitaItens', 'vendas', 'estoque', 'funcionarios', 'dre']
-            if (!keys.every((k) => k in data)) throw new Error('inválido')
-            set({
-              restaurante: data.restaurante || 'Meu Restaurante',
-              ingredientes: data.ingredientes,
-              receitas: data.receitas,
-              receitaItens: data.receitaItens,
-              vendas: data.vendas,
-              estoque: data.estoque,
-              funcionarios: data.funcionarios,
-              dre: data.dre,
-            })
-          } catch {
-            alert('Arquivo de backup inválido ou corrompido.')
-          }
-        }
-        reader.readAsText(file)
-      },
-    }),
-    { name: "alpha-financeiro-v2" }
-  )
-);
-
-export default useStore;
+export default useStore

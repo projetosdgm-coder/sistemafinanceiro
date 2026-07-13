@@ -14,7 +14,7 @@ const ITEMS = [
   { id: 'nf',           label: 'Nota Fiscal IA', icon: '🧾', destaque: true },
 ]
 
-export default function Sidebar({ active, onNav }) {
+export default function Sidebar({ active, onNav, onLogout }) {
   const { restaurante, setRestaurante, exportBackup, importBackup } = useStore()
   const [editingNome, setEditingNome] = useState(false)
   const [nomeTemp, setNomeTemp] = useState(restaurante)
@@ -136,7 +136,18 @@ export default function Sidebar({ active, onNav }) {
           </div>
         </div>
 
-        <div style={{ color: '#333', fontSize: 10 }}>v2.0 · Sistema Financeiro Alpha</div>
+        <button
+          onClick={onLogout}
+          style={{
+            width: '100%', padding: '6px 10px', borderRadius: 6,
+            border: '1px solid #2a2a2a', background: 'transparent',
+            color: '#444', fontSize: 10, cursor: 'pointer',
+            fontFamily: 'inherit', marginBottom: 8,
+          }}
+        >
+          Sair da conta
+        </button>
+        <div style={{ color: '#333', fontSize: 10 }}>v3.0 · Sistema Financeiro Alpha</div>
       </div>
     </aside>
   )
