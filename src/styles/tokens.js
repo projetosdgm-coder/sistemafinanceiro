@@ -1,0 +1,16 @@
+export const C = {
+  preto:   "#111111",
+  amarelo: "#FFC107",
+  laranja: "#E65100",
+  branco:  "#FFFFFF",
+  cinza:   "#F4F4F4",
+  cinza2:  "#E0E0E0",
+  cinza3:  "#9E9E9E",
+  verde:   "#1B5E20",
+  verdeL:  "#E8F5E9",
+  verm:    "#B71C1C",
+  vermL:   "#FFEBEE",
+  azul:    "#0D47A1",
+  azulL:   "#E3F2FD",
+  sidebar: "#161616",
+};
