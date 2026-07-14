@@ -89,8 +89,18 @@ O documento pode ser uma NOTA FISCAL (com itens discriminados) OU um COMPROVANTE
 INGREDIENTES JA CADASTRADOS NO SISTEMA:
 ${lista}
 
-Analise o documento e extraia os itens comprados.
-Para cada item, tente encontrar a melhor correspondencia na lista acima pelo nome.
+Analise o documento e extraia os itens comprados. Para cada item:
+1) LIMPE O NOME (nome_limpo): expanda abreviacoes e escreva o nome comum do produto, sem marca, codigo ou gramatura. Exemplos:
+   - "OLEO SOJA VITAL U900" -> "Oleo de Soja"
+   - "LAV LOUCAS ODD 500ML" -> "Lava-loucas"
+   - "BISC MAIZ KODILA 112" -> "Biscoito Maizena"
+   - "SAB NIVEA 85 AVEIA" -> "Sabonete"
+   - "AGUA SANIT YPE 2L" -> "Agua Sanitaria"
+2) CLASSIFIQUE O DESTINO (destino):
+   - "cmv": insumo usado no preparo dos pratos (alimentos, bebidas, temperos, ingredientes em geral). Vai para o estoque.
+   - "despesa": item de consumo da operacao que NAO entra no prato (produtos de limpeza, higiene e descartaveis: sabonete, agua sanitaria, saco de lixo, detergente, papel toalha, luvas, etc.). Vira custo operacional no DRE.
+3) Se destino for "despesa", sugira dre_campo: "limpeza" para produtos de limpeza/higiene/descartaveis; caso contrario "outros".
+4) Se destino for "cmv", tente casar com a lista acima (ing_id); senao ing_id: null.
 
 Retorne APENAS um JSON valido neste formato:
 {
@@ -100,6 +110,9 @@ Retorne APENAS um JSON valido neste formato:
   "itens": [
     {
       "nome_nota": "nome exato como aparece no documento",
+      "nome_limpo": "Oleo de Soja",
+      "destino": "cmv",
+      "dre_campo": null,
       "ing_id": "id do ingrediente correspondente ou null",
       "qtd": 10.5,
       "un": "kg",
@@ -111,8 +124,7 @@ Retorne APENAS um JSON valido neste formato:
 
 Regras:
 - Se for NOTA FISCAL: extraia todos os itens. Converta gramas para kg (500g = qtd:0.5, un:"kg") e ml para L. Ignore impostos, descontos e totais gerais.
-- Se for COMPROVANTE DE PAGAMENTO (sem itens discriminados): retorne UM UNICO item representando o pagamento inteiro, com nome_nota = descricao/destinatario do pagamento, ing_id: null, qtd: 1, un: "un", precoUnit e precoTotal = valor total pago. O usuario vai detalhar depois o que foi comprado.
-- Se nao encontrar correspondencia pelo nome, deixe ing_id como null
+- Se for COMPROVANTE DE PAGAMENTO (sem itens discriminados): retorne UM UNICO item com nome_nota = descricao/destinatario, nome_limpo igual, destino "cmv", ing_id null, qtd 1, un "un", precoUnit e precoTotal = valor total pago. O usuario detalha depois.
 - Use ponto decimal nos numeros (sem R$ ou virgulas)`
 }
 
