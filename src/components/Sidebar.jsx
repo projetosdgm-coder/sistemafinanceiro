@@ -1,168 +1,150 @@
-﻿import { useState, useRef } from 'react'
-import { C } from '../styles/tokens'
-import useStore from '../store/useStore'
+﻿import { useState, useRef } from "react"
+import {
+  LayoutDashboard, Beef, ClipboardList, ShoppingCart, Package,
+  Users, TrendingDown, FileText, Receipt, CreditCard, Upload, LogOut,
+  Download, UploadCloud,
+} from "lucide-react"
+import useStore from "../store/useStore"
+import ThemeToggle from "./ThemeToggle"
 
 const ITEMS = [
-  { id: 'dashboard',    label: 'Dashboard',      icon: '📊' },
-  { id: 'ingredientes', label: 'Ingredientes',   icon: '🧂' },
-  { id: 'ficha',        label: 'Ficha Tecnica',  icon: '📋' },
-  { id: 'vendas',       label: 'Vendas',         icon: '🛒' },
-  { id: 'estoque',      label: 'Estoque',        icon: '📦' },
-  { id: 'cmo',          label: 'CMO',            icon: '👥' },
-  { id: 'cmv',          label: 'CMV',            icon: '📉' },
-  { id: 'dre',          label: 'DRE',            icon: '📑' },
-  { id: 'nf',           label: 'Nota Fiscal IA',   icon: '🧾', destaque: true },
-  { id: 'comprovante',  label: 'Comprovantes',     icon: '💳', destaque: true },
-  { id: 'importficha',  label: 'Importar Ficha',   icon: '📲', destaque: true },
+  { id: "dashboard",    label: "Dashboard",       Icon: LayoutDashboard },
+  { id: "ingredientes", label: "Ingredientes",    Icon: Beef             },
+  { id: "ficha",        label: "Ficha Tecnica",   Icon: ClipboardList    },
+  { id: "vendas",       label: "Vendas",          Icon: ShoppingCart     },
+  { id: "estoque",      label: "Estoque",         Icon: Package          },
+  { id: "cmo",          label: "CMO",             Icon: Users            },
+  { id: "cmv",          label: "CMV",             Icon: TrendingDown     },
+  { id: "dre",          label: "DRE",             Icon: FileText         },
+  { id: "nf",           label: "Nota Fiscal IA",  Icon: Receipt,  destaque: true },
+  { id: "comprovante",  label: "Comprovantes",    Icon: CreditCard, destaque: true },
+  { id: "importficha",  label: "Importar Ficha",  Icon: Upload,   destaque: true },
 ]
 
-export default function Sidebar({ active, onNav, onLogout }) {
+export default function Sidebar({ active, onNav, onLogout, theme, onToggleTheme }) {
   const { restaurante, setRestaurante, exportBackup, importBackup } = useStore()
   const [editingNome, setEditingNome] = useState(false)
   const [nomeTemp, setNomeTemp] = useState(restaurante)
   const fileRef = useRef()
 
   const handleNomeSave = () => {
-    setRestaurante(nomeTemp.trim() || 'Meu Restaurante')
+    setRestaurante(nomeTemp.trim() || "Meu Restaurante")
     setEditingNome(false)
   }
 
   const handleImport = (e) => {
     const file = e.target.files[0]
     if (file) importBackup(file)
-    e.target.value = ''
+    e.target.value = ""
   }
 
   return (
-    <aside style={{
-      width: 220,
-      minHeight: '100vh',
-      background: C.sidebar,
-      display: 'flex',
-      flexDirection: 'column',
-      flexShrink: 0,
-    }}>
-      {/* Logo + Nome do restaurante */}
-      <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #2a2a2a' }}>
-        <div style={{ color: C.amarelo, fontWeight: 700, fontSize: 13, letterSpacing: 1 }}>
+    <div className="h-full bg-gray-900 flex flex-col border-r border-gray-800">
+
+      {/* Logo + Restaurante */}
+      <div className="px-5 pt-5 pb-4 border-b border-gray-800">
+        <div className="text-primary font-bold text-sm tracking-widest mb-0.5">
           SISTEMA FINANCEIRO
         </div>
-        <div style={{ color: '#555', fontSize: 11, marginTop: 2, marginBottom: 10 }}>
-          Gestao de Restaurante
-        </div>
+        <div className="text-gray-600 text-xs mb-3">Gestao de Restaurante</div>
 
         {editingNome ? (
-          <div style={{ display: 'flex', gap: 4 }}>
+          <div className="flex gap-1.5">
             <input
               autoFocus
               value={nomeTemp}
-              onChange={(e) => setNomeTemp(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleNomeSave(); if (e.key === 'Escape') setEditingNome(false) }}
-              style={{
-                flex: 1, padding: '4px 6px', borderRadius: 4, border: `1px solid ${C.amarelo}`,
-                background: '#222', color: C.branco, fontSize: 11, fontFamily: 'inherit', outline: 'none',
+              onChange={e => setNomeTemp(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter") handleNomeSave()
+                if (e.key === "Escape") setEditingNome(false)
               }}
+              className="flex-1 bg-gray-800 text-white text-xs px-2 py-1 rounded border border-primary outline-none"
             />
-            <button onClick={handleNomeSave} style={btnSmall('#1B5E20')}>OK</button>
-            <button onClick={() => setEditingNome(false)} style={btnSmall('#333')}>X</button>
+            <button onClick={handleNomeSave}
+              className="px-2 py-1 bg-green-800 text-white text-xs rounded hover:bg-green-700">
+              OK
+            </button>
+            <button onClick={() => setEditingNome(false)}
+              className="px-2 py-1 bg-gray-700 text-white text-xs rounded hover:bg-gray-600">
+              X
+            </button>
           </div>
         ) : (
           <button
             onClick={() => { setNomeTemp(restaurante); setEditingNome(true) }}
             title="Clique para editar"
-            style={{
-              background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-              color: '#888', fontSize: 11, fontFamily: 'inherit', textAlign: 'left',
-              display: 'flex', alignItems: 'center', gap: 4, width: '100%',
-            }}
+            className="w-full flex items-center gap-2 text-left group"
           >
-            <span style={{ color: C.branco, fontWeight: 500, fontSize: 12, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span className="text-gray-200 text-xs font-medium flex-1 truncate group-hover:text-white transition-colors">
               {restaurante}
             </span>
-            <span style={{ fontSize: 10, color: '#555', flexShrink: 0 }}>✏️</span>
+            <span className="text-gray-700 text-xs group-hover:text-gray-400 transition-colors shrink-0">
+              ✏
+            </span>
           </button>
         )}
       </div>
 
-      {/* Nav */}
-      <nav style={{ flex: 1, padding: '12px 0' }}>
-        {ITEMS.map((item) => {
-          const isActive = active === item.id
+      {/* Navigation */}
+      <nav className="flex-1 py-3 overflow-y-auto">
+        {ITEMS.map(({ id, label, Icon, destaque }) => {
+          const isActive = active === id
           return (
             <button
-              key={item.id}
-              onClick={() => onNav(item.id)}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                padding: '10px 20px',
-                background: isActive ? '#222222' : 'transparent',
-                border: 'none',
-                borderLeft: isActive ? `3px solid ${C.amarelo}` : '3px solid transparent',
-                color: isActive ? C.branco : item.destaque ? C.amarelo : '#666',
-                fontSize: 13, fontWeight: isActive ? 600 : 400,
-                cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
-                transition: 'background 0.15s',
-              }}
+              key={id}
+              onClick={() => onNav(id)}
+              className={[
+                "w-full flex items-center gap-3 px-5 py-2.5 text-left text-sm transition-colors",
+                isActive
+                  ? "bg-gray-800 border-l-2 border-primary text-white font-semibold"
+                  : destaque
+                    ? "border-l-2 border-transparent text-primary hover:bg-gray-800 hover:text-white"
+                    : "border-l-2 border-transparent text-gray-500 hover:bg-gray-800 hover:text-gray-200",
+              ].join(" ")}
             >
-              <span style={{ fontSize: 16 }}>{item.icon}</span>
-              {item.label}
+              <Icon size={16} className="shrink-0" />
+              <span className="truncate">{label}</span>
             </button>
           )
         })}
       </nav>
 
       {/* Footer */}
-      <div style={{ padding: '14px 20px', borderTop: '1px solid #2a2a2a' }}>
+      <div className="px-4 py-3 border-t border-gray-800 space-y-2">
 
         {/* Backup */}
-        <div style={{ marginBottom: 10 }}>
-          <div style={{ color: '#555', fontSize: 10, marginBottom: 5, fontWeight: 600, letterSpacing: 0.5 }}>
-            BACKUP
-          </div>
-          <div style={{ display: 'flex', gap: 6 }}>
+        <div>
+          <div className="text-gray-700 text-xs font-semibold tracking-wider mb-1.5">BACKUP</div>
+          <div className="flex gap-2">
             <button
               onClick={exportBackup}
-              title="Exportar backup JSON"
-              style={btnFooter('#1a2a1a', '#4CAF50')}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold text-green-400 bg-green-900/20 border border-green-900/40 hover:bg-green-900/40 transition-colors"
             >
-              ⬇ Exportar
+              <Download size={12} /> Exportar
             </button>
             <button
               onClick={() => fileRef.current.click()}
-              title="Importar backup JSON"
-              style={btnFooter('#1a1a2a', '#5C9BF5')}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold text-blue-400 bg-blue-900/20 border border-blue-900/40 hover:bg-blue-900/40 transition-colors"
             >
-              ⬆ Importar
+              <UploadCloud size={12} /> Importar
             </button>
-            <input ref={fileRef} type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
+            <input ref={fileRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
           </div>
         </div>
 
-        <button
-          onClick={onLogout}
-          style={{
-            width: '100%', padding: '6px 10px', borderRadius: 6,
-            border: '1px solid #2a2a2a', background: 'transparent',
-            color: '#444', fontSize: 10, cursor: 'pointer',
-            fontFamily: 'inherit', marginBottom: 8,
-          }}
-        >
-          Sair da conta
-        </button>
-        <div style={{ color: '#333', fontSize: 10 }}>v3.1 · Sistema Financeiro</div>
+        {/* Bottom row: theme toggle + logout */}
+        <div className="flex items-center gap-2">
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+          <button
+            onClick={onLogout}
+            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs text-gray-600 border border-gray-800 hover:text-gray-400 hover:border-gray-700 transition-colors"
+          >
+            <LogOut size={12} /> Sair
+          </button>
+        </div>
+
+        <div className="text-gray-800 text-xs text-center">v3.1</div>
       </div>
-    </aside>
+    </div>
   )
 }
-
-const btnSmall = (bg) => ({
-  padding: '4px 7px', borderRadius: 4, border: 'none', background: bg,
-  color: C.branco, cursor: 'pointer', fontSize: 11, fontFamily: 'inherit',
-})
-
-const btnFooter = (bg, color) => ({
-  flex: 1, padding: '6px 4px', borderRadius: 5,
-  border: `1px solid ${color}33`,
-  background: bg, color, fontSize: 11,
-  cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600,
-})
