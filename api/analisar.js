@@ -1,4 +1,8 @@
 ﻿export default async function handler(req, res) {
+  // Marcador de versao/health — permite confirmar qual codigo esta no ar
+  if (req.method === 'GET') {
+    return res.status(200).json({ ok: true, version: 'analisar-v4', ts: Date.now() })
+  }
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -12,6 +16,9 @@
   if (!base64 || !prompt) {
     return res.status(400).json({ error: 'Dados incompletos' })
   }
+
+  const payloadMB = (base64.length * 0.75 / 1_000_000).toFixed(2)
+  console.log(`[analisar] recebido ${payloadMB}MB · isPDF=${!!isPDF} · mime=${mimeType}`)
 
   const bloco = isPDF
     ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }

@@ -39,10 +39,12 @@ function renderJpeg(img, dim, q) {
 // Comprime imagens grandes ate caberem no limite de payload do endpoint
 // (~4.5MB no Vercel; base64 infla ~33%, entao miramos <= 2.8MB de arquivo).
 // Reduz qualidade primeiro e, se preciso, encolhe a dimensao — em loop.
-async function comprimirImagem(file, { maxDim = 2000, maxBytes = 2_800_000 } = {}) {
+// maxDim 1568 = lado maior que a IA usa internamente; acima disso ela reduz
+// de qualquer forma, entao nao ha perda de legibilidade e o payload fica menor.
+async function comprimirImagem(file, { maxDim = 1568, maxBytes = 2_800_000 } = {}) {
   if (!file.type.startsWith('image/')) return file
-  // Arquivo ja pequeno: nao mexe
-  if (file.size <= 1_500_000) return file
+  // Arquivo pequeno e ja dentro da dimensao alvo: nao mexe
+  if (file.size <= 800_000) return file
 
   const dataUrl = await new Promise((resolve, reject) => {
     const r = new FileReader()
@@ -75,7 +77,20 @@ async function comprimirImagem(file, { maxDim = 2000, maxBytes = 2_800_000 } = {
   return new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' })
 }
 
+// Limite de payload do endpoint no Vercel e ~4.5MB. base64 e uma string;
+// barramos no cliente com folga (4MB) para dar mensagem clara antes do 413.
+const MAX_BASE64_CHARS = 4_000_000
+
 async function chamarAPI(base64, mimeType, prompt, isPDF = false, maxTokens = 2048) {
+  if (base64.length > MAX_BASE64_CHARS) {
+    const mb = (base64.length * 0.75 / 1_000_000).toFixed(1)
+    throw new Error(
+      isPDF
+        ? `PDF muito grande (~${mb}MB). Exporte em resolucao menor ou envie como imagem (JPG/PNG) — imagens sao otimizadas automaticamente.`
+        : `Imagem muito grande (~${mb}MB) mesmo apos otimizacao. Tente uma foto com menos resolucao.`
+    )
+  }
+
   const res = await fetch('/api/analisar', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -83,7 +98,7 @@ async function chamarAPI(base64, mimeType, prompt, isPDF = false, maxTokens = 20
   })
   if (!res.ok) {
     if (res.status === 413) {
-      throw new Error('Arquivo muito grande. Tente uma foto com menos resolucao ou um PDF mais leve.')
+      throw new Error('Arquivo muito grande para o servidor. Tente uma foto com menos resolucao ou um PDF mais leve.')
     }
     const err = await res.json().catch(() => ({}))
     throw new Error(err.error?.message || err.error || `Erro ${res.status}`)
