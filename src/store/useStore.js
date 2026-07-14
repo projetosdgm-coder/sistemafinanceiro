@@ -10,6 +10,8 @@ const fire = (query) => query.then(({ error }) => { if (error) console.error('[d
 const useStore = create((set, get) => ({
   userId: null,
   restaurante: 'Meu Restaurante',
+  onboarded: false,
+  loaded: false,
   ingredientes: [],
   receitas: [],
   receitaItens: [],
@@ -23,7 +25,7 @@ const useStore = create((set, get) => ({
 
   // Carrega todos os dados do Supabase apos login
   loadFromSupabase: async (userId) => {
-    set({ userId })
+    set({ userId, loaded: false })
     const [
       { data: perfil },
       { data: ingredientes },
@@ -57,6 +59,8 @@ const useStore = create((set, get) => ({
 
     set({
       restaurante: perfil?.restaurante || 'Meu Restaurante',
+      onboarded: !!perfil?.onboarded,
+      loaded: true,
       ingredientes: ingredientes || [],
       receitas: receitas || [],
       receitaItens: receitaItens || [],
@@ -70,7 +74,28 @@ const useStore = create((set, get) => ({
     })
   },
 
-  // Perfil
+  // Perfil — grava o nome do negocio. Awaited e devolve erro (nao falha calado).
+  salvarNomeNegocio: async (nome) => {
+    const restaurante = (nome || '').trim() || 'Meu Restaurante'
+    set({ restaurante })
+    const { userId } = get()
+    if (!userId) return { error: null }
+    const { error } = await sb.from('perfis').upsert({ id: userId, restaurante })
+    if (error) console.error('[db] salvarNomeNegocio', error)
+    return { error }
+  },
+
+  // Marca o primeiro acesso como concluido (nome + tutorial)
+  concluirOnboarding: async () => {
+    set({ onboarded: true })
+    const { userId } = get()
+    if (!userId) return { error: null }
+    const { error } = await sb.from('perfis').upsert({ id: userId, onboarded: true })
+    if (error) console.error('[db] concluirOnboarding', error)
+    return { error }
+  },
+
+  // Perfil — alteracao do nome (uso administrativo)
   setRestaurante: (restaurante) => {
     set({ restaurante })
     const { userId } = get()

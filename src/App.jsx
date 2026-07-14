@@ -13,13 +13,14 @@ import Estoque                from "./modules/Estoque"
 import CMO                    from "./modules/CMO"
 import CMV                    from "./modules/CMV"
 import DRE                    from "./modules/DRE"
+import Onboarding             from "./modules/Onboarding"
 
 export default function App() {
   const { theme, toggle: toggleTheme } = useTheme()
   const [session, setSession] = useState(undefined)
   const [active, setActive] = useState("dashboard")
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { loadFromSupabase } = useStore()
+  const { loadFromSupabase, loaded, onboarded } = useStore()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -44,6 +45,14 @@ export default function App() {
   }
 
   if (!session) return <Login />
+
+  if (!loaded) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <span className="text-primary font-bold text-lg tracking-widest animate-pulse">SISTEMA FINANCEIRO</span>
+      </div>
+    )
+  }
 
   const MODULES = {
     dashboard:    <Dashboard />,
@@ -100,6 +109,9 @@ export default function App() {
           {MODULES[active] ?? MODULES.dashboard}
         </main>
       </div>
+
+      {/* Primeiro acesso: define o nome do negocio e roda o tutorial */}
+      {!onboarded && <Onboarding onNav={handleNav} />}
     </div>
   )
 }

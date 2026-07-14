@@ -19,62 +19,23 @@ const ITEMS = [
 ]
 
 export default function Sidebar({ active, onNav, onLogout, theme, onToggleTheme }) {
-  const { restaurante, setRestaurante } = useStore()
-  const [editingNome, setEditingNome] = useState(false)
-  const [nomeTemp, setNomeTemp] = useState(restaurante)
+  const { restaurante } = useStore()
   const [restoreOpen, setRestoreOpen] = useState(false)
   const [restoreMsg, setRestoreMsg] = useState('')
-
-  const handleNomeSave = () => {
-    setRestaurante(nomeTemp.trim() || "Meu Restaurante")
-    setEditingNome(false)
-  }
 
   return (
     <div className="h-full bg-gray-900 flex flex-col border-r border-gray-800">
 
-      {/* Logo + Restaurante */}
+      {/* Logo + Restaurante (nome fixo — alteravel apenas pelo administrador) */}
       <div className="px-5 pt-5 pb-4 border-b border-gray-800">
         <div className="text-primary font-bold text-sm tracking-widest mb-0.5">
           SISTEMA FINANCEIRO
         </div>
         <div className="text-gray-600 text-xs mb-3">Gestao de Restaurante</div>
 
-        {editingNome ? (
-          <div className="flex gap-1.5">
-            <input
-              autoFocus
-              value={nomeTemp}
-              onChange={e => setNomeTemp(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === "Enter") handleNomeSave()
-                if (e.key === "Escape") setEditingNome(false)
-              }}
-              className="flex-1 bg-gray-800 text-white text-xs px-2 py-1 rounded border border-primary outline-none"
-            />
-            <button onClick={handleNomeSave}
-              className="px-2 py-1 bg-green-800 text-white text-xs rounded hover:bg-green-700">
-              OK
-            </button>
-            <button onClick={() => setEditingNome(false)}
-              className="px-2 py-1 bg-gray-700 text-white text-xs rounded hover:bg-gray-600">
-              X
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => { setNomeTemp(restaurante); setEditingNome(true) }}
-            title="Clique para editar"
-            className="w-full flex items-center gap-2 text-left group"
-          >
-            <span className="text-gray-200 text-xs font-medium flex-1 truncate group-hover:text-white transition-colors">
-              {restaurante}
-            </span>
-            <span className="text-gray-700 text-xs group-hover:text-gray-400 transition-colors shrink-0">
-              ✏
-            </span>
-          </button>
-        )}
+        <div className="text-gray-200 text-sm font-semibold truncate" title={restaurante}>
+          {restaurante}
+        </div>
       </div>
 
       {/* Navigation */}
