@@ -10,8 +10,9 @@ const NUM_CLS = 'w-32 px-2 py-1.5 rounded-md border border-blue-200 dark:border-
 const PCT_CLS = 'w-20 px-2 py-1.5 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-semibold text-sm text-right focus:outline-none'
 
 function NumInput({ value, onChange }) {
+  const display = value ? +parseFloat(value).toFixed(2) : 0
   return (
-    <input type="number" min={0} step="any" defaultValue={value} key={value}
+    <input type="number" min={0} step="0.01" defaultValue={display} key={display}
       onBlur={e => onChange(parseFloat(e.target.value) || 0)}
       className={NUM_CLS}
     />
@@ -38,8 +39,8 @@ function SectionRow({ title }) {
   )
 }
 
-function Row({ label, value, rl, indent = 0, bold, positive, negative, input }) {
-  const pct = rl > 0 ? value / rl : 0
+function Row({ label, value, rlCalc, rlReal, indent = 0, bold, positive, negative, input }) {
+  const pct = rlCalc > 0 ? value / rlCalc : 0
   const colorCls = negative
     ? 'text-red-600 dark:text-red-400'
     : positive
@@ -53,7 +54,7 @@ function Row({ label, value, rl, indent = 0, bold, positive, negative, input }) 
       </td>
       <td className="px-4 py-2 text-right w-44">{input || null}</td>
       <td className={`px-4 py-2 text-sm text-right w-36 ${bold ? 'font-bold' : ''} ${colorCls}`}>{fmtR(value)}</td>
-      <td className="px-4 py-2 text-xs text-right text-gray-400 dark:text-gray-500 w-20">{rl > 0 ? fmtP(pct) : '—'}</td>
+      <td className="px-4 py-2 text-xs text-right text-gray-400 dark:text-gray-500 w-20">{rlReal > 0 ? fmtP(pct) : '—'}</td>
     </tr>
   )
 }
@@ -68,7 +69,10 @@ export default function DRE() {
   const cmvReal = useMemo(() => calcularCMVReal(estoque, ingredientes), [estoque, ingredientes])
   const cmo     = useMemo(() => calcularCMO(funcionarios), [funcionarios])
   const r       = useMemo(() => calcularDRE(dre, cmvReal, cmo), [dre, cmvReal, cmo])
-  const rl      = r.rl || 1
+  const rlCalc  = r.rl || 1   // para divisao sem zero
+  const rlReal  = r.rl        // para mostrar '—' quando sem receita
+
+  const rl = { rlCalc, rlReal }
 
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-5xl">
@@ -100,26 +104,26 @@ export default function DRE() {
             </thead>
             <tbody>
               <SectionRow title="RECEITA BRUTA" />
-              <Row label="Salao"    value={dre.salao||0}    rl={rl} indent={1} input={<NumInput value={dre.salao||0}    onChange={set('salao')} />} />
-              <Row label="Delivery" value={dre.delivery||0} rl={rl} indent={1} input={<NumInput value={dre.delivery||0} onChange={set('delivery')} />} />
-              <Row label="iFood"    value={dre.ifood||0}    rl={rl} indent={1} input={<NumInput value={dre.ifood||0}    onChange={set('ifood')} />} />
-              <Row label="Eventos"  value={dre.eventos||0}  rl={rl} indent={1} input={<NumInput value={dre.eventos||0}  onChange={set('eventos')} />} />
-              <Row label="RECEITA BRUTA TOTAL" value={r.rb} rl={rl} bold />
+              <Row label="Salao"    value={dre.salao||0}    {...rl} indent={1} input={<NumInput value={dre.salao||0}    onChange={set('salao')} />} />
+              <Row label="Delivery" value={dre.delivery||0} {...rl} indent={1} input={<NumInput value={dre.delivery||0} onChange={set('delivery')} />} />
+              <Row label="iFood"    value={dre.ifood||0}    {...rl} indent={1} input={<NumInput value={dre.ifood||0}    onChange={set('ifood')} />} />
+              <Row label="Eventos"  value={dre.eventos||0}  {...rl} indent={1} input={<NumInput value={dre.eventos||0}  onChange={set('eventos')} />} />
+              <Row label="RECEITA BRUTA TOTAL" value={r.rb} {...rl} bold />
 
               <SectionRow title="DEDUCOES" />
-              <Row label={`Impostos (${fmtP(dre.imp_pct||0)})`} value={r.rb*(dre.imp_pct||0)} rl={rl} indent={1} input={<PctInput value={dre.imp_pct||0} onChange={set('imp_pct')} />} />
-              <Row label={`Taxas cartao (${fmtP(dre.taxa_pct||0)})`} value={r.rb*(dre.taxa_pct||0)} rl={rl} indent={1} input={<PctInput value={dre.taxa_pct||0} onChange={set('taxa_pct')} />} />
-              <Row label="Devolucoes" value={dre.dev||0} rl={rl} indent={1} input={<NumInput value={dre.dev||0} onChange={set('dev')} />} />
-              <Row label="TOTAL DEDUCOES" value={r.ded} rl={rl} bold negative />
+              <Row label={`Impostos (${fmtP(dre.imp_pct||0)})`} value={r.rb*(dre.imp_pct||0)} {...rl} indent={1} input={<PctInput value={dre.imp_pct||0} onChange={set('imp_pct')} />} />
+              <Row label={`Taxas cartao (${fmtP(dre.taxa_pct||0)})`} value={r.rb*(dre.taxa_pct||0)} {...rl} indent={1} input={<PctInput value={dre.taxa_pct||0} onChange={set('taxa_pct')} />} />
+              <Row label="Devolucoes" value={dre.dev||0} {...rl} indent={1} input={<NumInput value={dre.dev||0} onChange={set('dev')} />} />
+              <Row label="TOTAL DEDUCOES" value={r.ded} {...rl} bold negative />
 
-              <Row label="RECEITA LIQUIDA" value={r.rl} rl={rl} bold />
+              <Row label="RECEITA LIQUIDA" value={r.rl} {...rl} bold />
 
               <SectionRow title="CMV — CUSTO DE MERCADORIA VENDIDA" />
-              <Row label="CMV Real (do estoque)" value={cmvReal} rl={rl} indent={1} />
-              <Row label="LUCRO BRUTO" value={r.lb} rl={rl} bold positive={r.lb >= 0} negative={r.lb < 0} />
+              <Row label="CMV Real (do estoque)" value={cmvReal} {...rl} indent={1} />
+              <Row label="LUCRO BRUTO" value={r.lb} {...rl} bold positive={r.lb >= 0} negative={r.lb < 0} />
 
               <SectionRow title="CMO — CUSTO DE MAO DE OBRA" />
-              <Row label="Total CMO (calculado)" value={cmo} rl={rl} indent={1} />
+              <Row label="Total CMO (calculado)" value={cmo} {...rl} indent={1} />
 
               <SectionRow title="DESPESAS OPERACIONAIS" />
               {[
@@ -128,23 +132,23 @@ export default function DRE() {
                 ['manut','Manutencao'],['seguros','Seguros'],['pdv','PDV / Sistema'],
                 ['limpeza','Limpeza'],['outros','Outros'],
               ].map(([f, l]) => (
-                <Row key={f} label={l} value={dre[f]||0} rl={rl} indent={1} input={<NumInput value={dre[f]||0} onChange={set(f)} />} />
+                <Row key={f} label={l} value={dre[f]||0} {...rl} indent={1} input={<NumInput value={dre[f]||0} onChange={set(f)} />} />
               ))}
-              <Row label="TOTAL DESPESAS" value={r.desp} rl={rl} bold />
+              <Row label="TOTAL DESPESAS" value={r.desp} {...rl} bold />
 
-              <Row label="EBITDA" value={r.ebitda} rl={rl} bold positive={r.ebitda >= 0} negative={r.ebitda < 0} />
+              <Row label="EBITDA" value={r.ebitda} {...rl} bold positive={r.ebitda >= 0} negative={r.ebitda < 0} />
 
               <SectionRow title="AJUSTES ABAIXO DO EBITDA" />
-              <Row label="Depreciacao"  value={dre.depre||0}    rl={rl} indent={1} input={<NumInput value={dre.depre||0}    onChange={set('depre')} />} />
-              <Row label="Juros"        value={dre.juros||0}    rl={rl} indent={1} input={<NumInput value={dre.juros||0}    onChange={set('juros')} />} />
-              <Row label="Parcelas"     value={dre.parcelas||0} rl={rl} indent={1} input={<NumInput value={dre.parcelas||0} onChange={set('parcelas')} />} />
-              <Row label="IR / CSLL"    value={dre.ir||0}       rl={rl} indent={1} input={<NumInput value={dre.ir||0}       onChange={set('ir')} />} />
-              <Row label="TOTAL AJUSTES" value={r.ajustes + (dre.ir||0)} rl={rl} bold />
+              <Row label="Depreciacao"  value={dre.depre||0}    {...rl} indent={1} input={<NumInput value={dre.depre||0}    onChange={set('depre')} />} />
+              <Row label="Juros"        value={dre.juros||0}    {...rl} indent={1} input={<NumInput value={dre.juros||0}    onChange={set('juros')} />} />
+              <Row label="Parcelas"     value={dre.parcelas||0} {...rl} indent={1} input={<NumInput value={dre.parcelas||0} onChange={set('parcelas')} />} />
+              <Row label="IR / CSLL"    value={dre.ir||0}       {...rl} indent={1} input={<NumInput value={dre.ir||0}       onChange={set('ir')} />} />
+              <Row label="TOTAL AJUSTES" value={r.ajustes + (dre.ir||0)} {...rl} bold />
 
               <tr className={r.ll >= 0 ? 'bg-green-50 dark:bg-green-900/10' : 'bg-red-50 dark:bg-red-900/10'}>
                 <td colSpan={4} className="h-1 p-0" />
               </tr>
-              <Row label="LUCRO LIQUIDO" value={r.ll} rl={rl} bold positive={r.ll >= 0} negative={r.ll < 0} />
+              <Row label="LUCRO LIQUIDO" value={r.ll} {...rl} bold positive={r.ll >= 0} negative={r.ll < 0} />
             </tbody>
           </table>
         </div>
