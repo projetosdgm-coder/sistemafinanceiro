@@ -5,6 +5,7 @@ import useStore from "./store/useStore"
 import { useTheme } from "./hooks/useTheme"
 import Sidebar from "./components/Sidebar"
 import Logo from "./components/Logo"
+import MonthSelector from "./components/MonthSelector"
 import Login from "./modules/Login"
 import Dashboard              from "./modules/Dashboard"
 import Ingredientes           from "./modules/Ingredientes"
@@ -15,6 +16,9 @@ import CMO                    from "./modules/CMO"
 import CMV                    from "./modules/CMV"
 import DRE                    from "./modules/DRE"
 import Onboarding             from "./modules/Onboarding"
+
+// Abas que respeitam o mes selecionado (as demais sao catalogo global)
+const MONTHLY_TABS = new Set(["dashboard", "vendas", "estoque", "cmo", "cmv", "dre"])
 
 export default function App() {
   const { theme, toggle: toggleTheme } = useTheme()
@@ -105,6 +109,8 @@ export default function App() {
           </button>
           <Logo variant="lockup" theme="dark" size={24} />
         </header>
+
+        {MONTHLY_TABS.has(active) && <MonthSelector />}
 
         <main className="flex-1 overflow-y-auto">
           {MODULES[active] ?? MODULES.dashboard}

@@ -5,6 +5,7 @@ import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Toast from '../components/Toast'
 import PageHeader from '../components/PageHeader'
+import PriceHistoryModal from '../components/PriceHistoryModal'
 
 const FIELDS = [
   { name: 'nome',  label: 'Nome',       type: 'text',   required: true },
@@ -18,11 +19,14 @@ const TH = 'px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-
 const TD = 'px-4 py-3 text-sm text-gray-700 dark:text-gray-300 align-middle'
 
 export default function Ingredientes() {
-  const { ingredientes, addIngrediente, updateIngrediente, deleteIngrediente } = useStore()
+  const { ingredientes, addIngrediente, updateIngrediente, deleteIngrediente, addPrecoHistorico } = useStore()
   const [modal, setModal] = useState({ open: false, data: null })
   const [confirm, setConfirm] = useState(null)
   const [toast, setToast] = useState('')
   const [busca, setBusca] = useState('')
+  const [historico, setHistorico] = useState(null)
+
+  const hoje = () => new Date().toLocaleDateString('pt-BR')
 
   const filtrados = useMemo(() =>
     ingredientes.filter(i =>
@@ -30,12 +34,22 @@ export default function Ingredientes() {
       i.cat?.toLowerCase().includes(busca.toLowerCase())
     ), [ingredientes, busca])
 
+  const logPreco = (ing, preco) => addPrecoHistorico({
+    ing_id: ing.id, ing_nome: ing.nome, preco, un: ing.un, fornecedor: ing.forn || null, data: hoje(),
+  })
+
   const handleSave = (data) => {
     if (modal.data?.id) {
       updateIngrediente(modal.data.id, data)
+      // Registra ponto no historico se o preco mudou
+      if (Math.abs((modal.data.preco || 0) - (data.preco || 0)) > 0.005) {
+        logPreco({ ...modal.data, ...data }, data.preco || 0)
+      }
       setToast('Ingrediente atualizado!')
     } else {
-      addIngrediente({ ...data, id: `i${Date.now()}` })
+      const novo = { ...data, id: `i${Date.now()}` }
+      addIngrediente(novo)
+      logPreco(novo, data.preco || 0)
       setToast('Ingrediente adicionado!')
     }
     setModal({ open: false, data: null })
@@ -70,10 +84,11 @@ export default function Ingredientes() {
                 <div className="text-xs text-gray-400 truncate">{ing.cat}{ing.forn ? ` · ${ing.forn}` : ''}</div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <div className="text-right mr-1">
-                  <div className="text-sm font-bold text-gray-900 dark:text-white">{fmtR(ing.preco)}</div>
-                  <div className="text-[10px] text-gray-400">por {ing.un}</div>
-                </div>
+                <button onClick={() => setHistorico(ing)} title="Historico de preco"
+                  className="text-right mr-1 cursor-pointer">
+                  <div className="text-sm font-bold text-gray-900 dark:text-white underline decoration-dotted decoration-gray-300">{fmtR(ing.preco)}</div>
+                  <div className="text-[10px] text-gray-400">por {ing.un} · histórico</div>
+                </button>
                 <button onClick={() => setModal({ open: true, data: ing })}
                   className="px-2.5 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs cursor-pointer">
                   Editar
@@ -109,6 +124,9 @@ export default function Ingredientes() {
                   <td className={TD}>{fmtR(ing.preco)}</td>
                   <td className={TD}>{ing.forn || '—'}</td>
                   <td className={`${TD} flex gap-2`}>
+                    <button onClick={() => setHistorico(ing)} className="px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors cursor-pointer">
+                      Historico
+                    </button>
                     <button onClick={() => setModal({ open: true, data: ing })} className="px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors cursor-pointer">
                       Editar
                     </button>
@@ -125,6 +143,8 @@ export default function Ingredientes() {
           {filtrados.length} ingrediente(s)
         </div>
       </div>
+
+      {historico && <PriceHistoryModal ingrediente={historico} onClose={() => setHistorico(null)} />}
 
       <Modal
         isOpen={modal.open}

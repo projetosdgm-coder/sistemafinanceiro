@@ -280,7 +280,7 @@ function TelaSucesso({ stats, onNova, onVerEstoque }) {
 
 export default function LancamentoNF({ onNav }) {
   const store = useStore()
-  const { ingredientes, estoque, dre, updateIngrediente, updateEstoque, addIngrediente, addEstoque, updateDRE } = store
+  const { ingredientes, estoque, dre, updateIngrediente, updateEstoque, addIngrediente, addEstoque, updateDRE, addPrecoHistorico } = store
 
   const [status, setStatus] = useState('upload')
   const [file, setFile] = useState(null)
@@ -317,14 +317,19 @@ export default function LancamentoNF({ onNav }) {
       // Item de CMV: vai para estoque/ingredientes
       if (item.ing_id) {
         const ing = ingredientes.find(x => x.id === item.ing_id)
-        if (ing && Math.abs(ing.preco - item.precoUnit) > 0.005) { updateIngrediente(item.ing_id, { preco: item.precoUnit, forn: resultado.fornecedor || ing.forn }); precos++ }
+        if (ing && Math.abs(ing.preco - item.precoUnit) > 0.005) {
+          updateIngrediente(item.ing_id, { preco: item.precoUnit, forn: resultado.fornecedor || ing.forn }); precos++
+          addPrecoHistorico({ ing_id: ing.id, ing_nome: ing.nome, preco: item.precoUnit, un: ing.un, fornecedor: resultado.fornecedor || ing.forn || null, data: resultado.data || null })
+        }
         const est = estoque.find(x => x.ing_id === item.ing_id)
         if (est) updateEstoque(item.ing_id, { compras: (est.compras || 0) + item.qtd })
         else addEstoque({ ing_id: item.ing_id, ei: 0, compras: item.qtd, ef: 0 })
         importados++
       } else {
         const novoId = `i${Date.now()}${Math.floor(Math.random()*1000)}`
-        addIngrediente({ id: novoId, nome: (item.nome_novo || item.nome_limpo || item.nome_nota).trim(), cat: 'Outros', un: item.un, preco: item.precoUnit, forn: resultado.fornecedor || '' })
+        const nomeNovo = (item.nome_novo || item.nome_limpo || item.nome_nota).trim()
+        addIngrediente({ id: novoId, nome: nomeNovo, cat: 'Outros', un: item.un, preco: item.precoUnit, forn: resultado.fornecedor || '' })
+        addPrecoHistorico({ ing_id: novoId, ing_nome: nomeNovo, preco: item.precoUnit, un: item.un, fornecedor: resultado.fornecedor || null, data: resultado.data || null })
         addEstoque({ ing_id: novoId, ei: 0, compras: item.qtd, ef: 0 })
         importados++; novos++
       }
