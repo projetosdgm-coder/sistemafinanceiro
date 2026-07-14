@@ -8,6 +8,8 @@ import KpiCard from '../components/KpiCard'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Toast from '../components/Toast'
+import ImportOverlay from '../components/ImportOverlay'
+import LancamentoComprovante from './LancamentoComprovante'
 
 const FUNC_FIELDS = [
   { name: 'nome',    label: 'Nome',         type: 'text',   required: true },
@@ -24,7 +26,7 @@ const LANC_FIELDS = [
 const TH = 'px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap'
 const TD = 'px-4 py-3 text-sm text-gray-700 dark:text-gray-300 align-middle'
 
-export default function CMO() {
+export default function CMO({ onNav }) {
   const {
     funcionarios, comprovantes, ingredientes, estoque, dre,
     addFuncionario, updateFuncionario, deleteFuncionario,
@@ -36,6 +38,7 @@ export default function CMO() {
   const [confirmFunc, setConfirmFunc] = useState(null)
   const [confirmLanc, setConfirmLanc] = useState(null)
   const [toast, setToast] = useState('')
+  const [importOpen, setImportOpen] = useState(false)
 
   const cmoLancamentos = useMemo(() => comprovantes.filter(c => c.tipo === 'cmo'), [comprovantes])
 
@@ -85,6 +88,10 @@ export default function CMO() {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">CMO — Custo de Mao de Obra</h2>
         <div className="flex gap-2">
+          <button onClick={() => setImportOpen(true)}
+            className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-bold text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+            Importar Comprovante
+          </button>
           <button onClick={() => setModalLanc(true)}
             className="px-4 py-2 rounded-lg border border-primary text-primary font-bold text-sm hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors cursor-pointer">
             + Lancamento Avulso
@@ -248,6 +255,10 @@ export default function CMO() {
         onCancel={() => setConfirmLanc(null)}
       />
       <Toast message={toast} onDone={() => setToast('')} />
+
+      <ImportOverlay open={importOpen} onClose={() => setImportOpen(false)}>
+        <LancamentoComprovante onNav={(dest) => { setImportOpen(false); onNav?.(dest) }} />
+      </ImportOverlay>
     </div>
   )
 }

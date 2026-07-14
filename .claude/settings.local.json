@@ -16,7 +16,9 @@
       "Bash(pkill -f \"vite\")",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Alpha\\\\SistemaFinanceiro\\\\src\\\\hooks\")",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

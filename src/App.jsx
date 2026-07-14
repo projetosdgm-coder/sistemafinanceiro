@@ -13,9 +13,6 @@ import Estoque                from "./modules/Estoque"
 import CMO                    from "./modules/CMO"
 import CMV                    from "./modules/CMV"
 import DRE                    from "./modules/DRE"
-import LancamentoNF           from "./modules/LancamentoNF"
-import LancamentoComprovante  from "./modules/LancamentoComprovante"
-import LancamentoFichaTecnica from "./modules/LancamentoFichaTecnica"
 
 export default function App() {
   const { theme, toggle: toggleTheme } = useTheme()
@@ -51,15 +48,12 @@ export default function App() {
   const MODULES = {
     dashboard:    <Dashboard />,
     ingredientes: <Ingredientes />,
-    ficha:        <FichaTecnica />,
+    ficha:        <FichaTecnica onNav={handleNav} />,
     vendas:       <Vendas />,
-    estoque:      <Estoque />,
-    cmo:          <CMO />,
+    estoque:      <Estoque onNav={handleNav} />,
+    cmo:          <CMO onNav={handleNav} />,
     cmv:          <CMV />,
-    dre:          <DRE />,
-    nf:           <LancamentoNF onNav={handleNav} />,
-    comprovante:  <LancamentoComprovante onNav={handleNav} />,
-    importficha:  <LancamentoFichaTecnica onNav={handleNav} />,
+    dre:          <DRE onNav={handleNav} />,
   }
 
   return (

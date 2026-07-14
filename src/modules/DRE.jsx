@@ -3,6 +3,8 @@ import useStore from '../store/useStore'
 import { fmtR, fmtP } from '../utils/formatters'
 import { calcularCMVReal, calcularCMO, calcularDRE } from '../utils/calculations'
 import Toast from '../components/Toast'
+import ImportOverlay from '../components/ImportOverlay'
+import LancamentoComprovante from './LancamentoComprovante'
 const loadPDF   = () => import('../utils/exportPDF')
 const loadExcel = () => import('../utils/exportExcel')
 
@@ -59,10 +61,11 @@ function Row({ label, value, rlCalc, rlReal, indent = 0, bold, positive, negativ
   )
 }
 
-export default function DRE() {
+export default function DRE({ onNav }) {
   const store = useStore()
   const { dre, ingredientes, estoque, funcionarios, comprovantes, updateDRE } = store
   const [toast, setToast] = useState('')
+  const [importOpen, setImportOpen] = useState(false)
 
   const set = (field) => (val) => { updateDRE({ [field]: val }); setToast('DRE atualizada!') }
 
@@ -80,6 +83,10 @@ export default function DRE() {
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">DRE — Demonstrativo de Resultado</h2>
         <div className="flex items-center gap-3">
           <span className="text-xs text-gray-400">Campos em <span className="text-blue-500 font-bold">azul</span> sao editaveis</span>
+          <button onClick={() => setImportOpen(true)}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold rounded-lg border border-primary text-primary hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors cursor-pointer">
+            Importar Comprovante
+          </button>
           <button onClick={() => loadPDF().then(m => m.exportDREPDF(store, store.restaurante))}
             className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
             PDF
@@ -155,6 +162,10 @@ export default function DRE() {
       </div>
 
       <Toast message={toast} onDone={() => setToast('')} />
+
+      <ImportOverlay open={importOpen} onClose={() => setImportOpen(false)}>
+        <LancamentoComprovante onNav={(dest) => { setImportOpen(false); onNav?.(dest) }} />
+      </ImportOverlay>
     </div>
   )
 }

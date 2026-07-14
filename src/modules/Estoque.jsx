@@ -4,16 +4,19 @@ import { fmtR, fmtN } from '../utils/formatters'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Toast from '../components/Toast'
+import ImportOverlay from '../components/ImportOverlay'
+import LancamentoNF from './LancamentoNF'
 
 const TH = 'px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap'
 const TD = 'px-4 py-3 text-sm text-gray-700 dark:text-gray-300 align-middle'
 const NUM_INPUT = 'w-24 px-2 py-1.5 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-semibold text-sm text-center focus:outline-none'
 
-export default function Estoque() {
+export default function Estoque({ onNav }) {
   const { estoque, ingredientes, addEstoque, updateEstoque, deleteEstoque } = useStore()
   const [modal, setModal] = useState(false)
   const [confirm, setConfirm] = useState(null)
   const [toast, setToast] = useState('')
+  const [importOpen, setImportOpen] = useState(false)
 
   const ingNoCadastro = ingredientes.filter(i => !estoque.find(e => e.ing_id === i.id))
   const ingOptions = ingNoCadastro.map(i => ({ value: i.id, label: `${i.nome} (${i.un})` }))
@@ -47,10 +50,16 @@ export default function Estoque() {
     <div className="p-6 md:p-8 space-y-6 max-w-7xl">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">Estoque</h2>
-        <button onClick={() => setModal(true)} disabled={ingOptions.length === 0}
-          className="px-4 py-2 rounded-lg bg-primary text-white font-bold text-sm hover:bg-primary-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-          + Adicionar ao Estoque
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setImportOpen(true)}
+            className="px-4 py-2 rounded-lg border border-primary text-primary font-bold text-sm hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors cursor-pointer">
+            Importar Nota / Comprovante
+          </button>
+          <button onClick={() => setModal(true)} disabled={ingOptions.length === 0}
+            className="px-4 py-2 rounded-lg bg-primary text-white font-bold text-sm hover:bg-primary-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+            + Adicionar ao Estoque
+          </button>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
@@ -114,6 +123,10 @@ export default function Estoque() {
         onCancel={() => setConfirm(null)}
       />
       <Toast message={toast} onDone={() => setToast('')} />
+
+      <ImportOverlay open={importOpen} onClose={() => setImportOpen(false)}>
+        <LancamentoNF onNav={(dest) => { setImportOpen(false); onNav?.(dest) }} />
+      </ImportOverlay>
     </div>
   )
 }

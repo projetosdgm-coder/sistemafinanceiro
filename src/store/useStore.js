@@ -19,6 +19,7 @@ const useStore = create((set, get) => ({
   dre: DRE0,
   categoriasCusto: [],
   comprovantes: [],
+  vendasLancamentos: [],
 
   // Carrega todos os dados do Supabase apos login
   loadFromSupabase: async (userId) => {
@@ -34,6 +35,7 @@ const useStore = create((set, get) => ({
       { data: dre },
       { data: categoriasCusto },
       { data: comprovantes },
+      { data: vendasLancamentos },
     ] = await Promise.all([
       sb.from('perfis').select('*').eq('id', userId).single(),
       sb.from('ingredientes').select('*').eq('user_id', userId),
@@ -45,6 +47,7 @@ const useStore = create((set, get) => ({
       sb.from('dre').select('*').eq('user_id', userId).single(),
       sb.from('categorias_custo').select('*').eq('user_id', userId),
       sb.from('comprovantes').select('*').eq('user_id', userId),
+      sb.from('vendas_lancamentos').select('*').eq('user_id', userId),
     ])
 
     // Garante que o row de perfis existe (usuarios criados via dashboard podem nao ter)
@@ -63,6 +66,7 @@ const useStore = create((set, get) => ({
       dre: dre ? { ...DRE0, ...dre } : DRE0,
       categoriasCusto: categoriasCusto || [],
       comprovantes: comprovantes || [],
+      vendasLancamentos: vendasLancamentos || [],
     })
   },
 
@@ -225,6 +229,19 @@ const useStore = create((set, get) => ({
     set((s) => ({ comprovantes: s.comprovantes.filter((c) => c.id !== id) }))
     const { userId } = get()
     if (userId) fire(sb.from('comprovantes').delete().eq('id', id).eq('user_id', userId))
+  },
+
+  // Lancamentos de Venda (faturamento por canal e periodo)
+  addVendaLancamento: (lanc) => {
+    set((s) => ({ vendasLancamentos: [...s.vendasLancamentos, lanc] }))
+    const { userId } = get()
+    if (userId) fire(sb.from('vendas_lancamentos').insert({ ...lanc, user_id: userId }))
+  },
+
+  deleteVendaLancamento: (id) => {
+    set((s) => ({ vendasLancamentos: s.vendasLancamentos.filter((v) => v.id !== id) }))
+    const { userId } = get()
+    if (userId) fire(sb.from('vendas_lancamentos').delete().eq('id', id).eq('user_id', userId))
   },
 
   // Backup

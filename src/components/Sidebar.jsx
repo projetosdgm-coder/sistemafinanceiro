@@ -1,7 +1,7 @@
 ﻿import { useState, useRef } from "react"
 import {
   LayoutDashboard, Beef, ClipboardList, ShoppingCart, Package,
-  Users, TrendingDown, FileText, Receipt, CreditCard, Upload, LogOut,
+  Users, TrendingDown, FileText, LogOut,
   Download, UploadCloud,
 } from "lucide-react"
 import useStore from "../store/useStore"
@@ -16,9 +16,6 @@ const ITEMS = [
   { id: "cmo",          label: "CMO",             Icon: Users            },
   { id: "cmv",          label: "CMV",             Icon: TrendingDown     },
   { id: "dre",          label: "DRE",             Icon: FileText         },
-  { id: "nf",           label: "Nota Fiscal IA",  Icon: Receipt,  destaque: true },
-  { id: "comprovante",  label: "Comprovantes",    Icon: CreditCard, destaque: true },
-  { id: "importficha",  label: "Importar Ficha",  Icon: Upload,   destaque: true },
 ]
 
 export default function Sidebar({ active, onNav, onLogout, theme, onToggleTheme }) {
