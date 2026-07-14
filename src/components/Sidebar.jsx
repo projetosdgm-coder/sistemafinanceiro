@@ -1,8 +1,7 @@
-﻿import { useState, useRef } from "react"
+﻿import { useState } from "react"
 import {
   LayoutDashboard, Beef, ClipboardList, ShoppingCart, Package,
   Users, TrendingDown, FileText, LogOut,
-  Download, UploadCloud,
 } from "lucide-react"
 import useStore from "../store/useStore"
 import ThemeToggle from "./ThemeToggle"
@@ -19,20 +18,13 @@ const ITEMS = [
 ]
 
 export default function Sidebar({ active, onNav, onLogout, theme, onToggleTheme }) {
-  const { restaurante, setRestaurante, exportBackup, importBackup } = useStore()
+  const { restaurante, setRestaurante } = useStore()
   const [editingNome, setEditingNome] = useState(false)
   const [nomeTemp, setNomeTemp] = useState(restaurante)
-  const fileRef = useRef()
 
   const handleNomeSave = () => {
     setRestaurante(nomeTemp.trim() || "Meu Restaurante")
     setEditingNome(false)
-  }
-
-  const handleImport = (e) => {
-    const file = e.target.files[0]
-    if (file) importBackup(file)
-    e.target.value = ""
   }
 
   return (
@@ -108,26 +100,6 @@ export default function Sidebar({ active, onNav, onLogout, theme, onToggleTheme 
 
       {/* Footer */}
       <div className="px-4 py-3 border-t border-gray-800 space-y-2">
-
-        {/* Backup */}
-        <div>
-          <div className="text-gray-700 text-xs font-semibold tracking-wider mb-1.5">BACKUP</div>
-          <div className="flex gap-2">
-            <button
-              onClick={exportBackup}
-              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold text-green-400 bg-green-900/20 border border-green-900/40 hover:bg-green-900/40 transition-colors"
-            >
-              <Download size={12} /> Exportar
-            </button>
-            <button
-              onClick={() => fileRef.current.click()}
-              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold text-blue-400 bg-blue-900/20 border border-blue-900/40 hover:bg-blue-900/40 transition-colors"
-            >
-              <UploadCloud size={12} /> Importar
-            </button>
-            <input ref={fileRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
-          </div>
-        </div>
 
         {/* Bottom row: theme toggle + logout */}
         <div className="flex items-center gap-2">
