@@ -1,7 +1,7 @@
 <svg width="512" height="512" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
   <title>CostChef</title>
   <g transform="translate(0,14)" fill="none" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M62 149.5 L62 118 A33 33 0 1 1 61.26 52.02 A40 40 0 0 1 138.74 52.02 A33 33 0 1 1 138 118 L138 149.5" stroke="#111111"/>
+    <path d="M62 149.5 L62 118 A33 33 0 1 1 61.26 52.02 A40 40 0 0 1 138.74 52.02 A33 33 0 1 1 138 118 L138 149.5" stroke="#FFFFFF"/>
     <path d="M80 149.5 L80 130" stroke="#F97316"/>
     <path d="M100 149.5 L100 116" stroke="#F97316"/>
     <path d="M120 149.5 L120 102" stroke="#F97316"/>

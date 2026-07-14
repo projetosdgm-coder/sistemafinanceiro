@@ -6,6 +6,7 @@ import {
 import useStore from "../store/useStore"
 import ThemeToggle from "./ThemeToggle"
 import RestoreModal from "./RestoreModal"
+import Logo from "./Logo"
 
 const ITEMS = [
   { id: "dashboard",    label: "Dashboard",       Icon: LayoutDashboard },
@@ -28,10 +29,8 @@ export default function Sidebar({ active, onNav, onLogout, theme, onToggleTheme 
 
       {/* Logo + Restaurante (nome fixo — alteravel apenas pelo administrador) */}
       <div className="px-5 pt-5 pb-4 border-b border-gray-800">
-        <div className="text-primary font-bold text-sm tracking-widest mb-0.5">
-          SISTEMA FINANCEIRO
-        </div>
-        <div className="text-gray-600 text-xs mb-3">Gestao de Restaurante</div>
+        <Logo variant="lockup" theme="dark" size={30} />
+        <div className="text-gray-600 text-xs mt-1.5 mb-3">Gestão financeira para restaurantes</div>
 
         <div className="text-gray-200 text-sm font-semibold truncate" title={restaurante}>
           {restaurante}
@@ -84,7 +83,7 @@ export default function Sidebar({ active, onNav, onLogout, theme, onToggleTheme 
           </button>
         </div>
 
-        <div className="text-gray-800 text-xs text-center">v3.1</div>
+        <div className="text-gray-800 text-xs text-center">CostChef · v3.1</div>
       </div>
 
       {restoreOpen && (

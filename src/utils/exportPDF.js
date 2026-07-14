@@ -8,6 +8,7 @@ import {
   drawIdentificacao, drawSectionTitle, drawKpiCards, drawBenchBar,
   drawRodape, statusBench, statusColor,
 } from './pdfKit'
+import logoPdf from '../assets/logo/costchef-lockup-preto-1024.png?inline'
 
 const emissaoAgora = () =>
   new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
@@ -271,7 +272,7 @@ export function exportDREPDF(store, restaurante) {
   // Pagina 1 — identificacao + resumo executivo
   let y = drawIdentificacao(doc, {
     restaurante, titulo: 'Demonstrativo de Resultado do Exercicio (DRE)',
-    periodo, emissao: emissaoAgora(),
+    periodo, emissao: emissaoAgora(), logo: logoPdf,
   })
   y = drawSectionTitle(doc, 'Resumo Executivo', y)
   y = drawKpiCards(doc, kpiCardsFrom(r, cmvReal, cmo, rl), y) + 6
@@ -311,7 +312,7 @@ export function exportDashboardPDF(store, restaurante) {
 
   let y = drawIdentificacao(doc, {
     restaurante, titulo: 'Dashboard — Resumo Executivo',
-    periodo, emissao: emissaoAgora(),
+    periodo, emissao: emissaoAgora(), logo: logoPdf,
   })
   y = drawSectionTitle(doc, 'Indicadores Financeiros', y)
   y = drawKpiCards(doc, kpiCardsFrom(r, cmvReal, cmo, rl), y) + 6

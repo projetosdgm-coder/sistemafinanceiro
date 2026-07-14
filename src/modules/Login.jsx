@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import Logo from '../components/Logo'
 
 export default function Login() {
   const [modo, setModo] = useState('login')
@@ -36,9 +37,9 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950">
       <div className="w-[380px] max-w-[90vw] bg-gray-900 rounded-2xl p-10 shadow-2xl">
-        <div className="text-center mb-8">
-          <div className="text-primary font-extrabold text-xl tracking-widest">SISTEMA FINANCEIRO</div>
-          <div className="text-gray-500 text-xs mt-1">Gestao de Restaurante</div>
+        <div className="flex flex-col items-center mb-8">
+          <Logo variant="lockup" theme="dark" size={38} />
+          <div className="text-gray-500 text-xs mt-2">Gestão financeira para restaurantes</div>
         </div>
 
         <div className="text-white font-bold text-lg mb-6 text-center">

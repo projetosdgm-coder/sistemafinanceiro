@@ -39,7 +39,7 @@ export function mesAno(date = new Date()) {
 }
 
 // Cabecalho de identificacao (fundo branco + acento laranja). Retorna o Y util.
-export function drawIdentificacao(doc, { restaurante, titulo, periodo, emissao, cnpj, regime }) {
+export function drawIdentificacao(doc, { restaurante, titulo, periodo, emissao, cnpj, regime, logo }) {
   doc.setTextColor(...PALETTE.preto)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(18)
@@ -50,9 +50,17 @@ export function drawIdentificacao(doc, { restaurante, titulo, periodo, emissao, 
   doc.setTextColor(...PALETTE.cinza)
   doc.text(titulo, M, 25.5)
 
+  // Logo CostChef (lockup preto 1024x331) no canto superior direito, proporcao original
+  let yInfo = 14
+  if (logo) {
+    const w = 34, h = w * (331 / 1024)
+    doc.addImage(logo, 'PNG', RIGHT - w, 6, w, h)
+    yInfo = 22
+  }
+
   doc.setFontSize(8.5)
-  doc.text(`Periodo de referencia: ${periodo}`, RIGHT, 14, { align: 'right' })
-  doc.text(`Emitido em: ${emissao}`, RIGHT, 18.5, { align: 'right' })
+  doc.text(`Periodo de referencia: ${periodo}`, RIGHT, yInfo, { align: 'right' })
+  doc.text(`Emitido em: ${emissao}`, RIGHT, yInfo + 4.5, { align: 'right' })
 
   const cnpjTxt = cnpj ? `CNPJ: ${cnpj}` : 'CNPJ: ____________________'
   const regTxt = regime ? `Regime Tributario: ${regime}` : 'Regime Tributario: ____________________'

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import useStore from '../store/useStore'
+import Logo from '../components/Logo'
 
 const TOUR = [
   { tab: 'dashboard',    titulo: 'Dashboard',      texto: 'Sua visao geral: receita, custos, lucro e os indicadores comparados com o benchmark do setor. E a primeira tela que voce ve ao entrar.' },
@@ -46,7 +47,10 @@ export default function Onboarding({ onNav }) {
     return (
       <div className="fixed inset-0 z-[4000] flex items-center justify-center bg-gray-950/80 backdrop-blur-sm p-4">
         <div className="w-[440px] max-w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8">
-          <div className="text-primary font-extrabold text-sm tracking-widest mb-1">SISTEMA FINANCEIRO</div>
+          <div className="mb-2">
+            <span className="dark:hidden"><Logo variant="lockup" theme="light" size={26} /></span>
+            <span className="hidden dark:inline"><Logo variant="lockup" theme="dark" size={26} /></span>
+          </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Bem-vindo! 👋</h2>
           <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
             Para comecar, qual o nome do seu negocio? Ele aparece nos relatorios e fica fixo no sistema.

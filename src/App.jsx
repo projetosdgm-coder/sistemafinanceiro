@@ -4,6 +4,7 @@ import { supabase } from "./lib/supabase"
 import useStore from "./store/useStore"
 import { useTheme } from "./hooks/useTheme"
 import Sidebar from "./components/Sidebar"
+import Logo from "./components/Logo"
 import Login from "./modules/Login"
 import Dashboard              from "./modules/Dashboard"
 import Ingredientes           from "./modules/Ingredientes"
@@ -39,7 +40,7 @@ export default function App() {
   if (session === undefined) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <span className="text-primary font-bold text-lg tracking-widest">SISTEMA FINANCEIRO</span>
+        <Logo variant="lockup" theme="dark" size={40} />
       </div>
     )
   }
@@ -49,7 +50,7 @@ export default function App() {
   if (!loaded) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <span className="text-primary font-bold text-lg tracking-widest animate-pulse">SISTEMA FINANCEIRO</span>
+        <span className="animate-pulse"><Logo variant="lockup" theme="dark" size={40} /></span>
       </div>
     )
   }
@@ -102,7 +103,7 @@ export default function App() {
           >
             <Menu size={22} />
           </button>
-          <span className="text-primary font-bold tracking-widest text-sm">SISTEMA FINANCEIRO</span>
+          <Logo variant="lockup" theme="dark" size={24} />
         </header>
 
         <main className="flex-1 overflow-y-auto">
