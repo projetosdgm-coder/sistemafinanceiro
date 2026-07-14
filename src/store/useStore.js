@@ -105,6 +105,20 @@ const useStore = create((set, get) => ({
 
   setMes: async (mes) => { await get().carregarMes(mes) },
 
+  // Busca dados mensais de um ano inteiro (para o comparativo).
+  // Nao altera o mes selecionado — retorna as linhas cruas por mes.
+  fetchAno: async (ano) => {
+    const { userId } = get()
+    if (!userId) return { dre: [], estoque: [], comprovantes: [] }
+    const like = `${ano}-%`
+    const [{ data: dre }, { data: estoque }, { data: comprovantes }] = await Promise.all([
+      sb.from('dre').select('*').eq('user_id', userId).like('mes', like),
+      sb.from('estoque').select('*').eq('user_id', userId).like('mes', like),
+      sb.from('comprovantes').select('*').eq('user_id', userId).like('mes', like),
+    ])
+    return { dre: dre || [], estoque: estoque || [], comprovantes: comprovantes || [] }
+  },
+
   // Perfil — grava o nome do negocio. Awaited e devolve erro (nao falha calado).
   salvarNomeNegocio: async (nome) => {
     const restaurante = (nome || '').trim() || 'Meu Restaurante'

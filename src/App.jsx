@@ -15,6 +15,7 @@ import Estoque                from "./modules/Estoque"
 import CMO                    from "./modules/CMO"
 import CMV                    from "./modules/CMV"
 import DRE                    from "./modules/DRE"
+import Comparativo            from "./modules/Comparativo"
 import Onboarding             from "./modules/Onboarding"
 
 // Abas que respeitam o mes selecionado (as demais sao catalogo global)
@@ -68,6 +69,7 @@ export default function App() {
     cmo:          <CMO onNav={handleNav} />,
     cmv:          <CMV />,
     dre:          <DRE onNav={handleNav} />,
+    comparativo:  <Comparativo />,
   }
 
   return (

@@ -1,7 +1,7 @@
 ﻿import { useState } from "react"
 import {
   LayoutDashboard, Beef, ClipboardList, ShoppingCart, Package,
-  Users, TrendingDown, FileText, LogOut, History,
+  Users, TrendingDown, FileText, LogOut, History, LineChart,
 } from "lucide-react"
 import useStore from "../store/useStore"
 import ThemeToggle from "./ThemeToggle"
@@ -17,6 +17,7 @@ const ITEMS = [
   { id: "cmo",          label: "CMO",             Icon: Users            },
   { id: "cmv",          label: "CMV",             Icon: TrendingDown     },
   { id: "dre",          label: "DRE",             Icon: FileText         },
+  { id: "comparativo",  label: "Comparativo",     Icon: LineChart        },
 ]
 
 export default function Sidebar({ active, onNav, onLogout, theme, onToggleTheme }) {
