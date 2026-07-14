@@ -1,10 +1,11 @@
 ﻿import { useState } from "react"
 import {
   LayoutDashboard, Beef, ClipboardList, ShoppingCart, Package,
-  Users, TrendingDown, FileText, LogOut,
+  Users, TrendingDown, FileText, LogOut, History,
 } from "lucide-react"
 import useStore from "../store/useStore"
 import ThemeToggle from "./ThemeToggle"
+import RestoreModal from "./RestoreModal"
 
 const ITEMS = [
   { id: "dashboard",    label: "Dashboard",       Icon: LayoutDashboard },
@@ -21,6 +22,8 @@ export default function Sidebar({ active, onNav, onLogout, theme, onToggleTheme 
   const { restaurante, setRestaurante } = useStore()
   const [editingNome, setEditingNome] = useState(false)
   const [nomeTemp, setNomeTemp] = useState(restaurante)
+  const [restoreOpen, setRestoreOpen] = useState(false)
+  const [restoreMsg, setRestoreMsg] = useState('')
 
   const handleNomeSave = () => {
     setRestaurante(nomeTemp.trim() || "Meu Restaurante")
@@ -101,6 +104,14 @@ export default function Sidebar({ active, onNav, onLogout, theme, onToggleTheme 
       {/* Footer */}
       <div className="px-4 py-3 border-t border-gray-800 space-y-2">
 
+        {/* Restaurar backup */}
+        <button
+          onClick={() => setRestoreOpen(true)}
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded text-xs text-gray-600 hover:text-gray-300 transition-colors"
+        >
+          <History size={12} /> Restaurar backup
+        </button>
+
         {/* Bottom row: theme toggle + logout */}
         <div className="flex items-center gap-2">
           <ThemeToggle theme={theme} onToggle={onToggleTheme} />
@@ -114,6 +125,20 @@ export default function Sidebar({ active, onNav, onLogout, theme, onToggleTheme 
 
         <div className="text-gray-800 text-xs text-center">v3.1</div>
       </div>
+
+      {restoreOpen && (
+        <RestoreModal
+          onClose={() => setRestoreOpen(false)}
+          onDone={(d) => { setRestoreOpen(false); setRestoreMsg(`Backup restaurado (${d.restauradas} registros).`) }}
+        />
+      )}
+      {restoreMsg && (
+        <div className="fixed bottom-7 right-7 z-[3000] bg-green-600 text-white px-5 py-3 rounded-xl shadow-lg text-sm"
+          onAnimationEnd={() => {}}>
+          {restoreMsg}
+          <button onClick={() => setRestoreMsg('')} className="ml-3 opacity-70 hover:opacity-100">×</button>
+        </div>
+      )}
     </div>
   )
 }
