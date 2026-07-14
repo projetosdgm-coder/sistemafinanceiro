@@ -21,6 +21,41 @@ function isHEIC(file) {
   )
 }
 
+// Redimensiona/comprime imagens grandes (fotos de celular) para nao estourar
+// o limite de payload do endpoint (~4.5MB no Vercel). Mantem o texto legivel.
+async function comprimirImagem(file, maxDim = 2200, quality = 0.82) {
+  if (!file.type.startsWith('image/')) return file
+
+  const dataUrl = await new Promise((resolve, reject) => {
+    const r = new FileReader()
+    r.onload = () => resolve(r.result)
+    r.onerror = reject
+    r.readAsDataURL(file)
+  })
+  const img = await new Promise((resolve, reject) => {
+    const im = new Image()
+    im.onload = () => resolve(im)
+    im.onerror = reject
+    im.src = dataUrl
+  })
+
+  const escala = Math.min(1, maxDim / Math.max(img.width, img.height))
+  // Ja pequena e leve: nao mexe
+  if (escala === 1 && file.size < 3.5 * 1024 * 1024) return file
+
+  const w = Math.max(1, Math.round(img.width * escala))
+  const h = Math.max(1, Math.round(img.height * escala))
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')
+  ctx.drawImage(img, 0, 0, w, h)
+
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality))
+  if (!blob) return file
+  return new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' })
+}
+
 async function chamarAPI(base64, mimeType, prompt, isPDF = false, maxTokens = 2048) {
   const res = await fetch('/api/analisar', {
     method: 'POST',
@@ -28,6 +63,9 @@ async function chamarAPI(base64, mimeType, prompt, isPDF = false, maxTokens = 20
     body: JSON.stringify({ base64, mimeType, prompt, isPDF, maxTokens }),
   })
   if (!res.ok) {
+    if (res.status === 413) {
+      throw new Error('Arquivo muito grande. Tente uma foto com menos resolucao ou um PDF mais leve.')
+    }
     const err = await res.json().catch(() => ({}))
     throw new Error(err.error?.message || err.error || `Erro ${res.status}`)
   }
@@ -132,6 +170,7 @@ Regras:
 
 export async function analisarNF(file, ingredientes) {
   if (isHEIC(file)) file = await converterHEIC(file)
+  file = await comprimirImagem(file)
   const isPDF  = file.type === 'application/pdf'
   const base64 = await fileToBase64(file)
   return chamarAPI(base64, isPDF ? 'application/pdf' : file.type, buildPromptNF(ingredientes), isPDF)
@@ -139,6 +178,7 @@ export async function analisarNF(file, ingredientes) {
 
 export async function analisarComprovante(file) {
   if (isHEIC(file)) file = await converterHEIC(file)
+  file = await comprimirImagem(file)
   const isPDF  = file.type === 'application/pdf'
   const base64 = await fileToBase64(file)
   return chamarAPI(base64, isPDF ? 'application/pdf' : file.type, buildPromptComprovante(), isPDF)
@@ -146,6 +186,7 @@ export async function analisarComprovante(file) {
 
 export async function analisarFichaTecnica(file) {
   if (isHEIC(file)) file = await converterHEIC(file)
+  file = await comprimirImagem(file)
   const isPDF  = file.type === 'application/pdf'
   const base64 = await fileToBase64(file)
   return chamarAPI(base64, isPDF ? 'application/pdf' : file.type, buildPromptFicha(), isPDF, 4096)
