@@ -1,14 +1,14 @@
-export default async function handler(req, res) {
+﻿export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    return res.status(500).json({ error: 'API key não configurada no servidor' })
+    return res.status(500).json({ error: 'API key nao configurada no servidor' })
   }
 
-  const { base64, mimeType, prompt, isPDF } = req.body
+  const { base64, mimeType, prompt, isPDF, maxTokens } = req.body
   if (!base64 || !prompt) {
     return res.status(400).json({ error: 'Dados incompletos' })
   }
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       headers,
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 2048,
+        max_tokens: maxTokens || 2048,
         messages: [{ role: 'user', content: [bloco, { type: 'text', text: prompt }] }],
       }),
     })

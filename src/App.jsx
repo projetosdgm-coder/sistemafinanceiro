@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { C } from './styles/tokens'
 import { supabase } from './lib/supabase'
 import useStore from './store/useStore'
@@ -12,11 +12,12 @@ import Estoque      from './modules/Estoque'
 import CMO          from './modules/CMO'
 import CMV          from './modules/CMV'
 import DRE          from './modules/DRE'
-import LancamentoNF          from './modules/LancamentoNF'
-import LancamentoComprovante from './modules/LancamentoComprovante'
+import LancamentoNF           from './modules/LancamentoNF'
+import LancamentoComprovante  from './modules/LancamentoComprovante'
+import LancamentoFichaTecnica from './modules/LancamentoFichaTecnica'
 
 export default function App() {
-  const [session, setSession] = useState(undefined) // undefined = carregando
+  const [session, setSession] = useState(undefined)
   const [active, setActive] = useState('dashboard')
   const { loadFromSupabase } = useStore()
 
@@ -58,6 +59,7 @@ export default function App() {
     dre:          <DRE />,
     nf:           <LancamentoNF onNav={setActive} />,
     comprovante:  <LancamentoComprovante onNav={setActive} />,
+    importficha:  <LancamentoFichaTecnica onNav={setActive} />,
   }
 
   return (

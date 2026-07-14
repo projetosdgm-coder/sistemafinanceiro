@@ -1,11 +1,11 @@
-import { useState, useRef } from 'react'
+﻿import { useState, useRef } from 'react'
 import { C } from '../styles/tokens'
 import useStore from '../store/useStore'
 
 const ITEMS = [
   { id: 'dashboard',    label: 'Dashboard',      icon: '📊' },
   { id: 'ingredientes', label: 'Ingredientes',   icon: '🧂' },
-  { id: 'ficha',        label: 'Ficha Técnica',  icon: '📋' },
+  { id: 'ficha',        label: 'Ficha Tecnica',  icon: '📋' },
   { id: 'vendas',       label: 'Vendas',         icon: '🛒' },
   { id: 'estoque',      label: 'Estoque',        icon: '📦' },
   { id: 'cmo',          label: 'CMO',            icon: '👥' },
@@ -13,6 +13,7 @@ const ITEMS = [
   { id: 'dre',          label: 'DRE',            icon: '📑' },
   { id: 'nf',           label: 'Nota Fiscal IA',   icon: '🧾', destaque: true },
   { id: 'comprovante',  label: 'Comprovantes',     icon: '💳', destaque: true },
+  { id: 'importficha',  label: 'Importar Ficha',   icon: '📲', destaque: true },
 ]
 
 export default function Sidebar({ active, onNav, onLogout }) {
@@ -46,8 +47,8 @@ export default function Sidebar({ active, onNav, onLogout }) {
         <div style={{ color: C.amarelo, fontWeight: 700, fontSize: 13, letterSpacing: 1 }}>
           SISTEMA FINANCEIRO
         </div>
-        <div style={{ color: C.cinza3, fontSize: 11, marginTop: 2, marginBottom: 10 }}>
-          Gestão de Restaurante
+        <div style={{ color: '#555', fontSize: 11, marginTop: 2, marginBottom: 10 }}>
+          Gestao de Restaurante
         </div>
 
         {editingNome ? (
@@ -62,8 +63,8 @@ export default function Sidebar({ active, onNav, onLogout }) {
                 background: '#222', color: C.branco, fontSize: 11, fontFamily: 'inherit', outline: 'none',
               }}
             />
-            <button onClick={handleNomeSave} style={btnSmall('#1B5E20')}>✓</button>
-            <button onClick={() => setEditingNome(false)} style={btnSmall('#333')}>✕</button>
+            <button onClick={handleNomeSave} style={btnSmall('#1B5E20')}>OK</button>
+            <button onClick={() => setEditingNome(false)} style={btnSmall('#333')}>X</button>
           </div>
         ) : (
           <button
@@ -97,7 +98,7 @@ export default function Sidebar({ active, onNav, onLogout }) {
                 background: isActive ? '#222222' : 'transparent',
                 border: 'none',
                 borderLeft: isActive ? `3px solid ${C.amarelo}` : '3px solid transparent',
-                color: isActive ? C.branco : item.destaque ? C.amarelo : C.cinza3,
+                color: isActive ? C.branco : item.destaque ? C.amarelo : '#666',
                 fontSize: 13, fontWeight: isActive ? 600 : 400,
                 cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
                 transition: 'background 0.15s',
@@ -148,7 +149,7 @@ export default function Sidebar({ active, onNav, onLogout }) {
         >
           Sair da conta
         </button>
-        <div style={{ color: '#333', fontSize: 10 }}>v3.0 · Sistema Financeiro</div>
+        <div style={{ color: '#333', fontSize: 10 }}>v3.1 · Sistema Financeiro</div>
       </div>
     </aside>
   )

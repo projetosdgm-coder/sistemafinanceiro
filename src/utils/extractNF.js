@@ -1,4 +1,4 @@
-function fileToBase64(file) {
+﻿function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(reader.result.split(',')[1])
@@ -21,11 +21,11 @@ function isHEIC(file) {
   )
 }
 
-async function chamarAPI(base64, mimeType, prompt, isPDF = false) {
+async function chamarAPI(base64, mimeType, prompt, isPDF = false, maxTokens = 2048) {
   const res = await fetch('/api/analisar', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ base64, mimeType, prompt, isPDF }),
+    body: JSON.stringify({ base64, mimeType, prompt, isPDF, maxTokens }),
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
@@ -33,9 +33,9 @@ async function chamarAPI(base64, mimeType, prompt, isPDF = false) {
   }
   const data = await res.json()
   const text = data.content?.[0]?.text
-  if (!text) throw new Error('IA não retornou resposta')
+  if (!text) throw new Error('IA nao retornou resposta')
   const match = text.match(/\{[\s\S]*\}/)
-  if (!match) throw new Error('IA não retornou um JSON válido')
+  if (!match) throw new Error('IA nao retornou um JSON valido')
   return JSON.parse(match[0])
 }
 
@@ -44,15 +44,15 @@ function buildPromptNF(ingredientes) {
     .map(i => `  ${i.id}: "${i.nome}" (${i.un}) — R$ ${i.preco.toFixed(2)}`)
     .join('\n')
 
-  return `Você é especialista em análise de notas fiscais para restaurantes brasileiros.
+  return `Voce e especialista em analise de notas fiscais para restaurantes brasileiros.
 
-INGREDIENTES JÁ CADASTRADOS NO SISTEMA:
+INGREDIENTES JA CADASTRADOS NO SISTEMA:
 ${lista}
 
 Analise esta nota fiscal e extraia todos os itens comprados.
-Para cada item, tente encontrar a melhor correspondência na lista acima pelo nome.
+Para cada item, tente encontrar a melhor correspondencia na lista acima pelo nome.
 
-Retorne APENAS um JSON válido neste formato:
+Retorne APENAS um JSON valido neste formato:
 {
   "fornecedor": "nome do fornecedor ou vazio",
   "data": "DD/MM/AAAA ou vazio",
@@ -69,30 +69,62 @@ Retorne APENAS um JSON válido neste formato:
 }
 
 Regras:
-- Converta gramas→kg (500g = qtd:0.5, un:"kg") e ml→L
+- Converta gramas para kg (500g = qtd:0.5, un:"kg") e ml para L
 - Ignore impostos, descontos e totais gerais
-- Se não encontrar correspondência pelo nome, deixe ing_id como null
-- Use ponto decimal nos números (sem R$ ou vírgulas)`
+- Se nao encontrar correspondencia pelo nome, deixe ing_id como null
+- Use ponto decimal nos numeros (sem R$ ou virgulas)`
 }
 
 function buildPromptComprovante() {
-  return `Você é especialista em análise de comprovantes de pagamento brasileiros (PIX, boleto, transferência).
+  return `Voce e especialista em analise de comprovantes de pagamento brasileiros (PIX, boleto, transferencia).
 
-Analise este comprovante e extraia as informações do pagamento.
+Analise este comprovante e extraia as informacoes do pagamento.
 
-Retorne APENAS um JSON válido neste formato:
+Retorne APENAS um JSON valido neste formato:
 {
   "valor": 1500.00,
   "data": "DD/MM/AAAA",
-  "descricao": "descrição ou destinatário do pagamento",
+  "descricao": "descricao ou destinatario do pagamento",
   "tipo": "PIX"
 }
 
 Regras:
-- Use ponto decimal nos valores (sem R$ ou vírgulas)
-- tipo pode ser: PIX, boleto, transferência, débito, outros
-- Se não encontrar algum campo, use null
-- Extraia o valor principal do pagamento (não o saldo da conta)`
+- Use ponto decimal nos valores (sem R$ ou virgulas)
+- tipo pode ser: PIX, boleto, transferencia, debito, outros
+- Se nao encontrar algum campo, use null
+- Extraia o valor principal do pagamento (nao o saldo da conta)`
+}
+
+function buildPromptFicha() {
+  return `Voce e especialista em fichas tecnicas de restaurantes brasileiros.
+
+Analise esta imagem de ficha tecnica e extraia TODOS os pratos com seus ingredientes.
+
+Retorne APENAS um JSON valido neste formato:
+{
+  "pratos": [
+    {
+      "nome": "American Cheddar",
+      "categoria": "Hamburgueres",
+      "ingredientes": [
+        { "nome": "Blend Angus", "qtd": 160, "un": "g" },
+        { "nome": "Pao de Hamburguer", "qtd": 1, "un": "un" },
+        { "nome": "Queijo Cheddar", "qtd": 40, "un": "g" },
+        { "nome": "Maionese da Casa", "qtd": 20, "un": "g" }
+      ]
+    }
+  ]
+}
+
+Regras:
+- Extraia TODOS os pratos visiveis na imagem, sem excecao
+- Unidades: "g" para gramas, "ml" para mililitros, "un" para unidades/fatias/pecas, "L" para litros
+- Converta: "160g" = qtd:160, un:"g" | "2 fatias" = qtd:2, un:"un" | "1 colher rasa (20g)" = qtd:20, un:"g"
+- "Coroa Pao" + "Base Pao" = 1 ingrediente "Pao de Hamburguer" (qtd:1, un:"un")
+- Ignore instrucoes de montagem como "cruzadas sobre a carne", "selado na grelha", "zig zag"
+- Nomes simples e padronizados: "Bacon Fatiado", "Queijo Cheddar", "Blend Angus", "Maionese da Casa"
+- categoria: infira pelo tipo ("Hamburgueres", "Frangos", "Kids", "Combos", "Acompanhamentos")
+- Nao inclua preco (nao esta na ficha)`
 }
 
 export async function analisarNF(file, ingredientes) {
@@ -107,4 +139,11 @@ export async function analisarComprovante(file) {
   const isPDF  = file.type === 'application/pdf'
   const base64 = await fileToBase64(file)
   return chamarAPI(base64, isPDF ? 'application/pdf' : file.type, buildPromptComprovante(), isPDF)
+}
+
+export async function analisarFichaTecnica(file) {
+  if (isHEIC(file)) file = await converterHEIC(file)
+  const isPDF  = file.type === 'application/pdf'
+  const base64 = await fileToBase64(file)
+  return chamarAPI(base64, isPDF ? 'application/pdf' : file.type, buildPromptFicha(), isPDF, 4096)
 }
