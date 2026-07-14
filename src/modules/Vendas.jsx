@@ -5,6 +5,7 @@ import { calcularCustoPrato } from '../utils/calculations'
 import KpiCard from '../components/KpiCard'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Toast from '../components/Toast'
+import PageHeader from '../components/PageHeader'
 
 const TH = 'px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap'
 const TD = 'px-4 py-3 text-sm text-gray-700 dark:text-gray-300 align-middle'
@@ -207,14 +208,13 @@ export default function Vendas() {
   }
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-7xl">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Vendas</h2>
+    <div className="p-4 md:p-8 space-y-5 md:space-y-6 max-w-7xl">
+      <PageHeader title="Vendas">
         <button onClick={() => setModalOpen(true)}
-          className="px-4 py-2 rounded-lg bg-primary text-white font-bold text-sm hover:bg-primary-600 transition-colors cursor-pointer">
+          className="px-3 py-2 rounded-lg bg-primary text-white font-bold text-xs md:text-sm hover:bg-primary-600 transition-colors cursor-pointer">
           + Lancar Venda
         </button>
-      </div>
+      </PageHeader>
 
       {/* Faturamento por canal */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
@@ -228,9 +228,41 @@ export default function Vendas() {
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
           <span className="font-semibold text-gray-900 dark:text-white text-sm">Lancamentos de Faturamento</span>
-          <span className="text-xs text-gray-400">alimenta a Receita Bruta do DRE</span>
+          <span className="text-xs text-gray-400 hidden sm:inline">alimenta a Receita Bruta do DRE</span>
         </div>
-        <div className="overflow-x-auto">
+
+        {/* Mobile: cards */}
+        <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
+          {lancOrdenados.length === 0 && (
+            <div className="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+              Nenhuma venda lancada. Use <span className="font-semibold text-primary">+ Lancar Venda</span>.
+            </div>
+          )}
+          {lancOrdenados.map(l => (
+            <div key={l.id} className="p-4 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-semibold text-sm text-gray-900 dark:text-white">{labelPeriodo(l)}</div>
+                <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">{canalLabel(l.canal)}</span>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="text-sm font-bold text-gray-900 dark:text-white">{fmtR(l.valor || 0)}</span>
+                <button onClick={() => setConfirm(l)}
+                  className="px-2.5 py-1.5 rounded-md border border-red-100 dark:border-red-900 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs cursor-pointer">
+                  ✕
+                </button>
+              </div>
+            </div>
+          ))}
+          {lancOrdenados.length > 0 && (
+            <div className="px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-900/50">
+              <span className="text-xs font-bold text-gray-900 dark:text-white">TOTAL</span>
+              <span className="text-sm font-bold text-gray-900 dark:text-white">{fmtR(totalFat)}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop: tabela */}
+        <div className="overflow-x-auto hidden md:block">
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-900/50">
@@ -276,9 +308,48 @@ export default function Vendas() {
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700">
           <span className="font-semibold text-gray-900 dark:text-white text-sm">Vendas por Prato</span>
-          <span className="ml-2 text-xs text-gray-400">quantidades usadas no CMV teorico e na margem</span>
+          <span className="ml-2 text-xs text-gray-400 hidden sm:inline">quantidades usadas no CMV teorico e na margem</span>
         </div>
-        <div className="overflow-x-auto">
+
+        {/* Mobile: cards */}
+        <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
+          {rows.length === 0 && (
+            <div className="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">Nenhum prato cadastrado.</div>
+          )}
+          {rows.map(r => (
+            <div key={r.id} className="p-4 space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-semibold text-sm text-gray-900 dark:text-white truncate">{r.nome}</div>
+                  <div className="text-xs text-gray-400">{r.cat} · {fmtR(r.preco)}</div>
+                </div>
+                <div className="shrink-0 text-center">
+                  <div className="text-[10px] uppercase tracking-wider text-gray-400 mb-1">Qtd.</div>
+                  <input
+                    type="number" min={0}
+                    key={r.id + r.qtd}
+                    defaultValue={r.qtd}
+                    onBlur={e => handleQtd(r.id, e.target.value)}
+                    className="w-20 px-2 py-1.5 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-semibold text-sm text-center focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs bg-gray-50 dark:bg-gray-900/40 rounded-lg px-3 py-2">
+                <span className="text-gray-500 dark:text-gray-400">Receita <strong className="text-gray-900 dark:text-white">{fmtR(r.recTotal)}</strong></span>
+                <span className={`font-bold ${r.margem >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>Margem {fmtR(r.margem)}</span>
+              </div>
+            </div>
+          ))}
+          {rows.length > 0 && (
+            <div className="px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-900/50">
+              <span className="text-xs font-bold text-gray-900 dark:text-white">TOTAL · {totais.qtd} un</span>
+              <span className={`text-sm font-bold ${totais.margem >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{fmtR(totais.margem)}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop: tabela */}
+        <div className="overflow-x-auto hidden md:block">
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-900/50">

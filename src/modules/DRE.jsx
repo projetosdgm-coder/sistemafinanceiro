@@ -8,8 +8,8 @@ import LancamentoComprovante from './LancamentoComprovante'
 const loadPDF   = () => import('../utils/exportPDF')
 const loadExcel = () => import('../utils/exportExcel')
 
-const NUM_CLS = 'w-32 px-2 py-1.5 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-semibold text-sm text-right focus:outline-none'
-const PCT_CLS = 'w-20 px-2 py-1.5 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-semibold text-sm text-right focus:outline-none'
+const NUM_CLS = 'w-24 md:w-32 px-2 py-1.5 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-semibold text-xs md:text-sm text-right focus:outline-none'
+const PCT_CLS = 'w-16 md:w-20 px-2 py-1.5 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-semibold text-xs md:text-sm text-right focus:outline-none'
 
 function NumInput({ value, onChange }) {
   const display = value ? +parseFloat(value).toFixed(2) : 0
@@ -36,7 +36,7 @@ function PctInput({ value, onChange }) {
 function SectionRow({ title }) {
   return (
     <tr className="bg-gray-50 dark:bg-gray-900/50">
-      <td colSpan={4} className="px-4 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</td>
+      <td colSpan={4} className="px-2 md:px-4 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</td>
     </tr>
   )
 }
@@ -51,12 +51,12 @@ function Row({ label, value, rlCalc, rlReal, indent = 0, bold, positive, negativ
 
   return (
     <tr className="border-t border-gray-100 dark:border-gray-700">
-      <td className={`px-4 py-2 text-sm ${bold ? 'font-bold' : ''} ${colorCls}`} style={{ paddingLeft: 16 + indent * 20 }}>
+      <td className={`px-2 md:px-4 py-2 text-xs md:text-sm ${bold ? 'font-bold' : ''} ${colorCls}`} style={{ paddingLeft: 8 + indent * 12 }}>
         {label}
       </td>
-      <td className="px-4 py-2 text-right w-44">{input || null}</td>
-      <td className={`px-4 py-2 text-sm text-right w-36 ${bold ? 'font-bold' : ''} ${colorCls}`}>{fmtR(value)}</td>
-      <td className="px-4 py-2 text-xs text-right text-gray-400 dark:text-gray-500 w-20">{rlReal > 0 ? fmtP(pct) : '—'}</td>
+      <td className="px-2 md:px-4 py-2 text-right w-28 md:w-44">{input || null}</td>
+      <td className={`px-2 md:px-4 py-2 text-xs md:text-sm text-right w-24 md:w-36 whitespace-nowrap ${bold ? 'font-bold' : ''} ${colorCls}`}>{fmtR(value)}</td>
+      <td className="hidden sm:table-cell px-2 md:px-4 py-2 text-xs text-right text-gray-400 dark:text-gray-500 w-20">{rlReal > 0 ? fmtP(pct) : '—'}</td>
     </tr>
   )
 }
@@ -78,21 +78,21 @@ export default function DRE({ onNav }) {
   const rl = { rlCalc, rlReal }
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-5xl">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">DRE — Demonstrativo de Resultado</h2>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-400">Campos em <span className="text-blue-500 font-bold">azul</span> sao editaveis</span>
+    <div className="p-4 md:p-8 space-y-5 md:space-y-6 max-w-5xl">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">DRE — Demonstrativo de Resultado</h2>
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+          <span className="hidden md:inline text-xs text-gray-400">Campos em <span className="text-blue-500 font-bold">azul</span> sao editaveis</span>
           <button onClick={() => setImportOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold rounded-lg border border-primary text-primary hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors cursor-pointer">
+            className="flex items-center gap-2 px-3 py-1.5 text-xs md:text-sm font-semibold rounded-lg border border-primary text-primary hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors cursor-pointer">
             Importar Comprovante
           </button>
           <button onClick={() => loadPDF().then(m => m.exportDREPDF(store, store.restaurante))}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+            className="flex items-center gap-2 px-3 py-1.5 text-xs md:text-sm font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
             PDF
           </button>
           <button onClick={() => loadExcel().then(m => m.exportDREExcel(store))}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+            className="flex items-center gap-2 px-3 py-1.5 text-xs md:text-sm font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
             Excel
           </button>
         </div>
@@ -103,10 +103,10 @@ export default function DRE({ onNav }) {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gray-900 dark:bg-gray-950">
-                <th className="px-4 py-3 text-left text-sm font-bold text-white">DESCRICAO</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 w-44">INPUT</th>
-                <th className="px-4 py-3 text-right text-sm font-bold text-white w-36">VALOR</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 w-20">% RL</th>
+                <th className="px-2 md:px-4 py-3 text-left text-xs md:text-sm font-bold text-white">DESCRICAO</th>
+                <th className="px-2 md:px-4 py-3 text-right text-xs font-semibold text-gray-400 w-28 md:w-44">INPUT</th>
+                <th className="px-2 md:px-4 py-3 text-right text-xs md:text-sm font-bold text-white w-24 md:w-36">VALOR</th>
+                <th className="hidden sm:table-cell px-2 md:px-4 py-3 text-right text-xs font-semibold text-gray-400 w-20">% RL</th>
               </tr>
             </thead>
             <tbody>

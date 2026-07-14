@@ -9,6 +9,7 @@ import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Toast from '../components/Toast'
 import ImportOverlay from '../components/ImportOverlay'
+import PageHeader from '../components/PageHeader'
 import LancamentoComprovante from './LancamentoComprovante'
 
 const FUNC_FIELDS = [
@@ -84,24 +85,21 @@ export default function CMO({ onNav }) {
   }
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-7xl">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">CMO — Custo de Mao de Obra</h2>
-        <div className="flex gap-2">
-          <button onClick={() => setImportOpen(true)}
-            className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-bold text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-            Importar Comprovante
-          </button>
-          <button onClick={() => setModalLanc(true)}
-            className="px-4 py-2 rounded-lg border border-primary text-primary font-bold text-sm hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors cursor-pointer">
-            + Lancamento Avulso
-          </button>
-          <button onClick={() => setModalFunc({ open: true, data: null })}
-            className="px-4 py-2 rounded-lg bg-primary text-white font-bold text-sm hover:bg-primary-600 transition-colors cursor-pointer">
-            + Novo Colaborador
-          </button>
-        </div>
-      </div>
+    <div className="p-4 md:p-8 space-y-5 md:space-y-6 max-w-7xl">
+      <PageHeader title="CMO — Custo de Mao de Obra">
+        <button onClick={() => setImportOpen(true)}
+          className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-bold text-xs md:text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+          Importar Comprovante
+        </button>
+        <button onClick={() => setModalLanc(true)}
+          className="px-3 py-2 rounded-lg border border-primary text-primary font-bold text-xs md:text-sm hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors cursor-pointer">
+          + Lancamento Avulso
+        </button>
+        <button onClick={() => setModalFunc({ open: true, data: null })}
+          className="px-3 py-2 rounded-lg bg-primary text-white font-bold text-xs md:text-sm hover:bg-primary-600 transition-colors cursor-pointer">
+          + Novo Colaborador
+        </button>
+      </PageHeader>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard label="Total CMO"              value={fmtR(cmo)} />
@@ -120,7 +118,51 @@ export default function CMO({ onNav }) {
           <span className="font-semibold text-gray-900 dark:text-white text-sm">Colaboradores</span>
           <span className="text-xs text-gray-400">{fmtR(totalFuncionarios)}</span>
         </div>
-        <div className="overflow-x-auto">
+
+        {/* Mobile: cards */}
+        <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
+          {funcionarios.length === 0 && (
+            <div className="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">Nenhum colaborador cadastrado.</div>
+          )}
+          {funcionarios.map(f => {
+            const enc   = f.regime === 'CLT' ? f.salario * (MULT_CLT - 1) : 0
+            const total = calcularCustoFuncionario(f)
+            return (
+              <div key={f.id} className="p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-sm text-gray-900 dark:text-white truncate">{f.nome}</div>
+                    <div className="text-xs text-gray-400">{f.cargo}</div>
+                  </div>
+                  <span className={`shrink-0 px-2.5 py-0.5 rounded-full text-xs font-bold ${f.regime === 'CLT' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'}`}>
+                    {f.regime}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  {[['Salario', fmtR(f.salario)], ['Encargos', fmtR(enc)], ['Total', fmtR(total)]].map(([l, v]) => (
+                    <div key={l} className="bg-gray-50 dark:bg-gray-900/40 rounded-lg py-2 px-1">
+                      <div className="text-[10px] uppercase tracking-wider text-gray-400">{l}</div>
+                      <div className="text-xs font-bold text-gray-900 dark:text-white truncate">{v}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setModalFunc({ open: true, data: f })}
+                    className="flex-1 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs cursor-pointer">
+                    Editar
+                  </button>
+                  <button onClick={() => setConfirmFunc(f.id)}
+                    className="flex-1 py-1.5 rounded-md border border-red-100 dark:border-red-900 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs cursor-pointer">
+                    Excluir
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Desktop: tabela */}
+        <div className="overflow-x-auto hidden md:block">
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-900/50">
@@ -184,7 +226,33 @@ export default function CMO({ onNav }) {
           </div>
           <span className="text-xs text-gray-400">{fmtR(totalLancamentos)}</span>
         </div>
-        <div className="overflow-x-auto">
+
+        {/* Mobile: cards */}
+        <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
+          {cmoLancamentos.length === 0 && (
+            <div className="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+              Nenhum lancamento avulso. Use <span className="font-semibold text-primary">+ Lancamento Avulso</span> ou lance via comprovante.
+            </div>
+          )}
+          {cmoLancamentos.map(c => (
+            <div key={c.id} className="p-4 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-semibold text-sm text-gray-900 dark:text-white truncate">{c.descricao || '—'}</div>
+                <div className="text-xs text-gray-400">{c.data || 'sem data'}</div>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="text-sm font-bold text-gray-900 dark:text-white">{fmtR(c.valor || 0)}</span>
+                <button onClick={() => setConfirmLanc(c.id)}
+                  className="px-2.5 py-1.5 rounded-md border border-red-100 dark:border-red-900 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs cursor-pointer">
+                  ✕
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop: tabela */}
+        <div className="overflow-x-auto hidden md:block">
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-900/50">

@@ -8,6 +8,7 @@ import useStore from "../store/useStore"
 import KpiCard from "../components/KpiCard"
 import SectionCard from "../components/SectionCard"
 import Badge from "../components/Badge"
+import PageHeader from "../components/PageHeader"
 import { calcularDRE, calcularCMVReal, calcularCMVTeorico, calcularCMO } from "../utils/calculations"
 import { fmtR, fmtP } from "../utils/formatters"
 import { BENCHMARKS } from "../utils/benchmarks"
@@ -89,18 +90,17 @@ export default function Dashboard() {
   const hasData = r.rb > 0
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-7xl">
+    <div className="p-4 md:p-8 space-y-5 md:space-y-6 max-w-7xl">
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Dashboard</h2>
+      <PageHeader title="Dashboard">
         <button
           onClick={() => loadPDF().then(m => m.exportDashboardPDF(store, store.restaurante))}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 text-xs md:text-sm font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
         >
           <FileDown size={15} /> Exportar PDF
         </button>
-      </div>
+      </PageHeader>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -118,14 +118,14 @@ export default function Dashboard() {
         <KpiCard
           label="EBITDA"
           value={fmtR(r.ebitda)}
-          sub={`Margem: ${fmtP(r.ebitda/rlSafe)}`}
+          sub={hasData ? `Margem: ${fmtP(r.ebitda/rlSafe)}` : undefined}
           negative={r.ebitda < 0}
           icon={<Activity size={16} />}
         />
         <KpiCard
           label="Lucro Liquido"
           value={fmtR(r.ll)}
-          sub={`Margem: ${fmtP(r.ll/rlSafe)}`}
+          sub={hasData ? `Margem: ${fmtP(r.ll/rlSafe)}` : undefined}
           negative={r.ll < 0}
           icon={<TrendingDown size={16} />}
         />
@@ -196,67 +196,95 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Benchmark bar chart */}
-      <SectionCard title="Indicadores vs Benchmark (% Rec. Liquida)">
-        <div className="p-4 h-56">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={benchData} layout="vertical" margin={{ left: 56, right: 24, top: 4, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" />
-              <XAxis type="number" tickFormatter={v => fmtP(v)} tick={{ fontSize: 10 }} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={52} />
-              <Tooltip content={<BenchTooltip />} />
-              <Legend iconSize={8}
-                formatter={v => <span className="text-xs text-gray-600 dark:text-gray-400">{v}</span>}
-              />
-              <Bar name="Atual"  dataKey="atual"  fill="#F97316" radius={[0, 3, 3, 0]} barSize={10} />
-              <Bar name="Ideal"  dataKey="ideal"  fill="#D1D5DB" radius={[0, 3, 3, 0]} barSize={10} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </SectionCard>
+      {/* Benchmarks: so fazem sentido com receita lancada */}
+      {hasData && (
+        <>
+          {/* Benchmark bar chart */}
+          <SectionCard title="Indicadores vs Benchmark (% Rec. Liquida)">
+            <div className="p-4 h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={benchData} layout="vertical" margin={{ left: 56, right: 24, top: 4, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" />
+                  <XAxis type="number" tickFormatter={v => fmtP(v)} tick={{ fontSize: 10 }} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={52} />
+                  <Tooltip content={<BenchTooltip />} />
+                  <Legend iconSize={8}
+                    formatter={v => <span className="text-xs text-gray-600 dark:text-gray-400">{v}</span>}
+                  />
+                  <Bar name="Atual"  dataKey="atual"  fill="#F97316" radius={[0, 3, 3, 0]} barSize={10} />
+                  <Bar name="Ideal"  dataKey="ideal"  fill="#D1D5DB" radius={[0, 3, 3, 0]} barSize={10} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </SectionCard>
 
-      {/* Benchmark table */}
-      <SectionCard title="Status dos Indicadores">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-gray-900/50">
-                {["INDICADOR","ATUAL","IDEAL","STATUS"].map(h => (
-                  <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {[
+          {/* Benchmark: cards no mobile, tabela no desktop */}
+          <SectionCard title="Status dos Indicadores">
+            {(() => {
+              const rows = [
                 { label: BENCHMARKS.cmv.label,       v: cmvReal/rlSafe,               b: BENCHMARKS.cmv       },
                 { label: BENCHMARKS.cmo.label,       v: cmo/rlSafe,                   b: BENCHMARKS.cmo       },
                 { label: BENCHMARKS.aluguel.label,   v: (dre.aluguel||0)/rlSafe,      b: BENCHMARKS.aluguel   },
                 { label: BENCHMARKS.ebitda.label,    v: r.ebitda/rlSafe,              b: BENCHMARKS.ebitda    },
                 { label: BENCHMARKS.ll.label,        v: r.ll/rlSafe,                  b: BENCHMARKS.ll        },
                 { label: BENCHMARKS.variancia.label, v: variancia,                    b: BENCHMARKS.variancia },
-              ].map((row, i) => (
-                <tr key={row.label} className={i % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-900/30"}>
-                  <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{row.label}</td>
-                  <td className="px-4 py-2.5 font-semibold text-gray-900 dark:text-white">{fmtP(row.v)}</td>
-                  <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400">
-                    {row.b.inv ? `>= ${fmtP(row.b.ideal)}` : `<= ${fmtP(row.b.ideal)}`}
-                  </td>
-                  <td className="px-4 py-2.5"><Badge status={statusBench(row.v, row.b)} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </SectionCard>
+              ]
+              return (
+                <>
+                  {/* Mobile: cards */}
+                  <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
+                    {rows.map(row => (
+                      <div key={row.label} className="px-4 py-3 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{row.label}</div>
+                          <div className="text-sm font-bold text-gray-900 dark:text-white">
+                            {fmtP(row.v)} <span className="font-normal text-xs text-gray-400">/ {row.b.inv ? '>=' : '<='} {fmtP(row.b.ideal)}</span>
+                          </div>
+                        </div>
+                        <Badge status={statusBench(row.v, row.b)} />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop: tabela */}
+                  <div className="overflow-x-auto hidden md:block">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-50 dark:bg-gray-900/50">
+                          {["INDICADOR","ATUAL","IDEAL","STATUS"].map(h => (
+                            <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((row, i) => (
+                          <tr key={row.label} className={i % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-900/30"}>
+                            <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{row.label}</td>
+                            <td className="px-4 py-2.5 font-semibold text-gray-900 dark:text-white">{fmtP(row.v)}</td>
+                            <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400">
+                              {row.b.inv ? `>= ${fmtP(row.b.ideal)}` : `<= ${fmtP(row.b.ideal)}`}
+                            </td>
+                            <td className="px-4 py-2.5"><Badge status={statusBench(row.v, row.b)} /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )
+            })()}
+          </SectionCard>
+        </>
+      )}
 
       {/* CMV boxes */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: "CMV TEORICO (Vendas)",    v: cmvTeorico,                    sub: `${fmtP(cmvTeorico/rlSafe)} da Rec. Liq.` },
-          { label: "CMV REAL (Estoque)",      v: cmvReal,                       sub: `${fmtP(cmvReal/rlSafe)} da Rec. Liq.` },
-          { label: "VARIANCIA (Desperdicio)", v: Math.abs(cmvReal-cmvTeorico),  sub: `${fmtP(variancia)} da Rec. Liq.` },
+          { label: "CMV TEORICO (Vendas)",    v: cmvTeorico,                    sub: hasData ? `${fmtP(cmvTeorico/rlSafe)} da Rec. Liq.` : 'sem receita lancada' },
+          { label: "CMV REAL (Estoque)",      v: cmvReal,                       sub: hasData ? `${fmtP(cmvReal/rlSafe)} da Rec. Liq.` : 'sem receita lancada' },
+          { label: "VARIANCIA (Desperdicio)", v: Math.abs(cmvReal-cmvTeorico),  sub: hasData ? `${fmtP(variancia)} da Rec. Liq.` : 'sem receita lancada' },
         ].map(({ label, v, sub }) => (
           <div key={label} className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
             <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{label}</div>
