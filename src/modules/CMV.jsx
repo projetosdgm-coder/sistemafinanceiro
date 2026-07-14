@@ -16,16 +16,16 @@ const TD = 'px-4 py-3 text-sm text-gray-700 dark:text-gray-300 align-middle'
 
 export default function CMV() {
   const store = useStore()
-  const { ingredientes, receitas, receitaItens, vendas, estoque, funcionarios, dre } = store
+  const { ingredientes, receitas, receitaItens, vendas, estoque, funcionarios, dre, comprovantes } = store
 
   const { cmvReal, cmvTeorico, rl, variancia } = useMemo(() => {
     const cmvReal = calcularCMVReal(estoque, ingredientes)
     const cmvTeorico = calcularCMVTeorico(receitas, receitaItens, vendas, ingredientes)
-    const cmo = calcularCMO(funcionarios)
+    const cmo = calcularCMO(funcionarios, comprovantes)
     const { rl } = calcularDRE(dre, cmvReal, cmo)
     const rlSafe = rl || 1
     return { cmvReal, cmvTeorico, rl: rlSafe, variancia: Math.abs(cmvReal - cmvTeorico) / rlSafe }
-  }, [ingredientes, receitas, receitaItens, vendas, estoque, funcionarios, dre])
+  }, [ingredientes, receitas, receitaItens, vendas, estoque, funcionarios, dre, comprovantes])
 
   const varAbs = Math.abs(cmvReal - cmvTeorico)
   const statusReal = statusBench(cmvReal / rl, BENCHMARKS.cmv)

@@ -221,6 +221,12 @@ const useStore = create((set, get) => ({
     if (userId) fire(sb.from('comprovantes').insert({ ...comp, user_id: userId }))
   },
 
+  deleteComprovante: (id) => {
+    set((s) => ({ comprovantes: s.comprovantes.filter((c) => c.id !== id) }))
+    const { userId } = get()
+    if (userId) fire(sb.from('comprovantes').delete().eq('id', id).eq('user_id', userId))
+  },
+
   // Backup
   exportBackup: () => {
     const s = get()

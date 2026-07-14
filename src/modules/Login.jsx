@@ -90,7 +90,7 @@ export default function Login() {
           )}
           {modo === 'recuperar' && (
             <button onClick={() => { setModo('login'); reset() }} className="text-xs text-primary hover:text-primary-600 underline bg-transparent border-none cursor-pointer">
-              ← Voltar para o login
+              {'←'} Voltar para o login
             </button>
           )}
         </div>

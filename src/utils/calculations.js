@@ -33,8 +33,12 @@ export function calcularCustoFuncionario(f) {
   return f.regime === "CLT" ? f.salario * MULT_CLT : f.salario;
 }
 
-export function calcularCMO(funcionarios) {
-  return funcionarios.reduce((s, f) => s + calcularCustoFuncionario(f), 0);
+export function calcularCMO(funcionarios, comprovantes = []) {
+  const fromFuncionarios = funcionarios.reduce((s, f) => s + calcularCustoFuncionario(f), 0)
+  const fromLancamentos = comprovantes
+    .filter(c => c.tipo === 'cmo')
+    .reduce((s, c) => s + (c.valor || 0), 0)
+  return fromFuncionarios + fromLancamentos
 }
 
 export function calcularDRE(dre, cmvReal, cmo) {

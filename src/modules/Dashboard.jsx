@@ -49,15 +49,15 @@ function BenchTooltip({ active, payload, label }) {
 
 export default function Dashboard() {
   const store = useStore()
-  const { ingredientes, receitas, receitaItens, vendas, estoque, funcionarios, dre } = store
+  const { ingredientes, receitas, receitaItens, vendas, estoque, funcionarios, dre, comprovantes } = store
 
   const { cmvReal, cmvTeorico, cmo, r } = useMemo(() => {
     const cmvReal   = calcularCMVReal(estoque, ingredientes)
     const cmvTeorico = calcularCMVTeorico(receitas, receitaItens, vendas, ingredientes)
-    const cmo       = calcularCMO(funcionarios)
+    const cmo       = calcularCMO(funcionarios, comprovantes)
     const r         = calcularDRE(dre, cmvReal, cmo)
     return { cmvReal, cmvTeorico, cmo, r }
-  }, [ingredientes, receitas, receitaItens, vendas, estoque, funcionarios, dre])
+  }, [ingredientes, receitas, receitaItens, vendas, estoque, funcionarios, dre, comprovantes])
 
   const rlSafe    = r.rl || 1
   const variancia = r.rl > 0 ? Math.abs(cmvReal - cmvTeorico) / r.rl : 0

@@ -61,13 +61,13 @@ function Row({ label, value, rlCalc, rlReal, indent = 0, bold, positive, negativ
 
 export default function DRE() {
   const store = useStore()
-  const { dre, ingredientes, estoque, funcionarios, updateDRE } = store
+  const { dre, ingredientes, estoque, funcionarios, comprovantes, updateDRE } = store
   const [toast, setToast] = useState('')
 
   const set = (field) => (val) => { updateDRE({ [field]: val }); setToast('DRE atualizada!') }
 
   const cmvReal = useMemo(() => calcularCMVReal(estoque, ingredientes), [estoque, ingredientes])
-  const cmo     = useMemo(() => calcularCMO(funcionarios), [funcionarios])
+  const cmo     = useMemo(() => calcularCMO(funcionarios, comprovantes), [funcionarios, comprovantes])
   const r       = useMemo(() => calcularDRE(dre, cmvReal, cmo), [dre, cmvReal, cmo])
   const rlCalc  = r.rl || 1   // para divisao sem zero
   const rlReal  = r.rl        // para mostrar '—' quando sem receita
