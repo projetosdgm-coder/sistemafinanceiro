@@ -21,10 +21,28 @@ function isHEIC(file) {
   )
 }
 
-// Redimensiona/comprime imagens grandes (fotos de celular) para nao estourar
-// o limite de payload do endpoint (~4.5MB no Vercel). Mantem o texto legivel.
-async function comprimirImagem(file, maxDim = 2200, quality = 0.82) {
+// Renderiza a imagem num JPEG com o lado maior limitado a `dim` e qualidade `q`.
+function renderJpeg(img, dim, q) {
+  const escala = Math.min(1, dim / Math.max(img.width, img.height))
+  const w = Math.max(1, Math.round(img.width * escala))
+  const h = Math.max(1, Math.round(img.height * escala))
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')
+  ctx.fillStyle = '#fff'          // fundo branco (PNGs com transparencia)
+  ctx.fillRect(0, 0, w, h)
+  ctx.drawImage(img, 0, 0, w, h)
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', q))
+}
+
+// Comprime imagens grandes ate caberem no limite de payload do endpoint
+// (~4.5MB no Vercel; base64 infla ~33%, entao miramos <= 2.8MB de arquivo).
+// Reduz qualidade primeiro e, se preciso, encolhe a dimensao — em loop.
+async function comprimirImagem(file, { maxDim = 2000, maxBytes = 2_800_000 } = {}) {
   if (!file.type.startsWith('image/')) return file
+  // Arquivo ja pequeno: nao mexe
+  if (file.size <= 1_500_000) return file
 
   const dataUrl = await new Promise((resolve, reject) => {
     const r = new FileReader()
@@ -39,19 +57,20 @@ async function comprimirImagem(file, maxDim = 2200, quality = 0.82) {
     im.src = dataUrl
   })
 
-  const escala = Math.min(1, maxDim / Math.max(img.width, img.height))
-  // Ja pequena e leve: nao mexe
-  if (escala === 1 && file.size < 3.5 * 1024 * 1024) return file
+  let dim = Math.min(maxDim, Math.max(img.width, img.height))
+  let q = 0.82
+  let blob = await renderJpeg(img, dim, q)
 
-  const w = Math.max(1, Math.round(img.width * escala))
-  const h = Math.max(1, Math.round(img.height * escala))
-  const canvas = document.createElement('canvas')
-  canvas.width = w
-  canvas.height = h
-  const ctx = canvas.getContext('2d')
-  ctx.drawImage(img, 0, 0, w, h)
+  // Enquanto ultrapassar o alvo, baixa qualidade; esgotada, encolhe a dimensao
+  let guarda = 0
+  while (blob && blob.size > maxBytes && guarda < 12) {
+    guarda++
+    if (q > 0.5) q = +(q - 0.12).toFixed(2)
+    else { dim = Math.round(dim * 0.82); q = 0.7 }
+    if (dim < 800) break
+    blob = await renderJpeg(img, dim, q)
+  }
 
-  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality))
   if (!blob) return file
   return new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' })
 }
