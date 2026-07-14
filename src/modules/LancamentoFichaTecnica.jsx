@@ -27,7 +27,7 @@ function converterQtd(qtd, deUn, paraUn) {
 function StatusBadge({ status, matchNome }) {
   const cfg = {
     existente: { cls: 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400', label: 'ja existe' },
-    novo:      { cls: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',     label: 'novo'      },
+    novo:      { cls: 'bg-primary-50 dark:bg-orange-900/20 text-primary-700 dark:text-primary', label: 'novo'      },
     ignorar:   { cls: 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500',       label: 'ignorar'   },
   }
   const s = cfg[status] || cfg.novo
@@ -115,7 +115,7 @@ export default function LancamentoFichaTecnica({ onNav }) {
           <strong className="text-gray-900 dark:text-white">{totalImportados.pratos}</strong> prato{totalImportados.pratos !== 1 ? 's' : ''} importado{totalImportados.pratos !== 1 ? 's' : ''} para a Ficha Tecnica.
         </p>
         {totalImportados.novos > 0 && (
-          <p className="text-blue-600 dark:text-blue-400 text-sm">
+          <p className="text-primary text-sm">
             ✨ {totalImportados.novos} ingrediente{totalImportados.novos !== 1 ? 's' : ''} novo{totalImportados.novos !== 1 ? 's' : ''} criado{totalImportados.novos !== 1 ? 's' : ''} com preco R$ 0,00. Atualize os precos na aba Ingredientes.
           </p>
         )}
@@ -150,7 +150,7 @@ export default function LancamentoFichaTecnica({ onNav }) {
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Revisar Importacao</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               A IA encontrou <strong>{pratos.length}</strong> pratos. Revise antes de importar.
-              {ingsNovos > 0 && <span className="text-blue-600 dark:text-blue-400"> ✨ {ingsNovos} ingrediente{ingsNovos !== 1 ? 's' : ''} novo{ingsNovos !== 1 ? 's' : ''} serao criados com preco R$ 0,00.</span>}
+              {ingsNovos > 0 && <span className="text-primary"> ✨ {ingsNovos} ingrediente{ingsNovos !== 1 ? 's' : ''} novo{ingsNovos !== 1 ? 's' : ''} serao criados com preco R$ 0,00.</span>}
             </p>
           </div>
           <button onClick={handleConfirmar}

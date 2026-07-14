@@ -129,7 +129,7 @@ function LancarVendaModal({ onClose, onSave }) {
             )}
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg px-4 py-2.5 text-xs text-blue-700 dark:text-blue-300">
+          <div className="bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700 rounded-lg px-4 py-2.5 text-xs text-gray-600 dark:text-gray-300">
             Este valor sera somado a <strong>Receita Bruta ({canalLabel(canal)})</strong> no DRE. Voce ainda pode ajustar manualmente no DRE.
           </div>
         </div>
@@ -242,7 +242,7 @@ export default function Vendas() {
             <div key={l.id} className="p-4 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="font-semibold text-sm text-gray-900 dark:text-white">{labelPeriodo(l)}</div>
-                <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">{canalLabel(l.canal)}</span>
+                <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{canalLabel(l.canal)}</span>
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <span className="text-sm font-bold text-gray-900 dark:text-white">{fmtR(l.valor || 0)}</span>
@@ -279,7 +279,7 @@ export default function Vendas() {
                 <tr key={l.id} className={`border-t border-gray-100 dark:border-gray-700 ${idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900/30'}`}>
                   <td className={`${TD} font-medium text-gray-900 dark:text-white`}>{labelPeriodo(l)}</td>
                   <td className={TD}>
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">{canalLabel(l.canal)}</span>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{canalLabel(l.canal)}</span>
                   </td>
                   <td className={`${TD} font-bold`}>{fmtR(l.valor || 0)}</td>
                   <td className={TD}>

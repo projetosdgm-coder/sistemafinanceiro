@@ -15,9 +15,9 @@ const METRICAS = [
   { id: 'rl',     label: 'Receita Liquida', cor: '#FB923C' },
   { id: 'cmv',    label: 'CMV',             cor: '#DC2626' },
   { id: 'cmo',    label: 'CMO',             cor: '#D97706' },
-  { id: 'desp',   label: 'Despesas',        cor: '#6B7280' },
-  { id: 'ebitda', label: 'EBITDA',          cor: '#0EA5E9' },
-  { id: 'll',     label: 'Lucro Liquido',   cor: '#16A34A' },
+  { id: 'desp',   label: 'Despesas',        cor: '#737373' },
+  { id: 'ebitda', label: 'EBITDA',          cor: '#16A34A' },
+  { id: 'll',     label: 'Lucro Liquido',   cor: '#15803D' },
 ]
 
 function ChartTooltip({ active, payload, label }) {

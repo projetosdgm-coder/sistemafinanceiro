@@ -134,7 +134,7 @@ export default function CMO({ onNav }) {
                     <div className="font-semibold text-sm text-gray-900 dark:text-white truncate">{f.nome}</div>
                     <div className="text-xs text-gray-400">{f.cargo}</div>
                   </div>
-                  <span className={`shrink-0 px-2.5 py-0.5 rounded-full text-xs font-bold ${f.regime === 'CLT' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'}`}>
+                  <span className={`shrink-0 px-2.5 py-0.5 rounded-full text-xs font-bold ${f.regime === 'CLT' ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300' : 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'}`}>
                     {f.regime}
                   </span>
                 </div>
@@ -183,7 +183,7 @@ export default function CMO({ onNav }) {
                     <td className={`${TD} font-medium text-gray-900 dark:text-white`}>{f.nome}</td>
                     <td className={TD}>{f.cargo}</td>
                     <td className={TD}>
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${f.regime === 'CLT' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'}`}>
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${f.regime === 'CLT' ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300' : 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'}`}>
                         {f.regime}
                       </span>
                     </td>

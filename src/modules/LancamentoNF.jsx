@@ -103,7 +103,7 @@ function TelaConfirmacao({ resultado, itens, setItens, ingredientes, onAddItem, 
       </div>
 
       {isComprovante && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3 text-sm text-blue-800 dark:text-blue-300">
+        <div className="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
           <strong>Comprovante de pagamento</strong> — sem itens discriminados. Detalhe abaixo o que foi comprado (ajuste o nome, quantidade e unidade, e divida em varios itens se precisar com <strong>+ Adicionar item</strong>).
         </div>
       )}
@@ -256,7 +256,7 @@ function TelaSucesso({ stats, onNova, onVerEstoque }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full mb-4">
         {[
           { label: 'Itens no estoque', value: stats.importados, cls: 'text-green-600 dark:text-green-400' },
-          { label: 'Precos atualizados', value: stats.precos, cls: 'text-blue-600 dark:text-blue-400' },
+          { label: 'Precos atualizados', value: stats.precos, cls: 'text-gray-700 dark:text-gray-300' },
           { label: 'Novos ingredientes', value: stats.novos, cls: 'text-primary' },
           { label: 'Despesas no DRE', value: fmtR(stats.despesas || 0), cls: 'text-purple-600 dark:text-purple-400' },
         ].map(s => (

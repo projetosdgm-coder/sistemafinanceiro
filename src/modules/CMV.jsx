@@ -54,10 +54,10 @@ export default function CMV() {
 
       {/* Cards comparativo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl p-5">
-          <div className="text-xs font-semibold text-blue-500 dark:text-blue-400 uppercase tracking-wider mb-2">CMV Teorico</div>
-          <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">{fmtR(cmvTeorico)}</div>
-          <div className="text-xs text-blue-400 mt-1">{pctRL(cmvTeorico/rl)}</div>
+        <div className="bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700 rounded-xl p-5">
+          <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">CMV Teorico</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">{fmtR(cmvTeorico)}</div>
+          <div className="text-xs text-gray-400 mt-1">{pctRL(cmvTeorico/rl)}</div>
           <div className="text-xs text-gray-400 mt-2">Calculado pelas fichas tecnicas x vendas</div>
         </div>
         <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-5">
