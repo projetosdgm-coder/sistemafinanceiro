@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react'
-import { C } from '../styles/tokens'
+﻿import { useState, useEffect } from 'react'
 import InputField from './InputField'
 
 export default function Modal({ isOpen, title, fields, initialData, onSave, onClose }) {
@@ -9,9 +8,7 @@ export default function Modal({ isOpen, title, fields, initialData, onSave, onCl
   useEffect(() => {
     if (isOpen) {
       const defaults = {}
-      fields?.forEach((f) => {
-        defaults[f.name] = initialData?.[f.name] ?? f.default ?? ''
-      })
+      fields?.forEach(f => { defaults[f.name] = initialData?.[f.name] ?? f.default ?? '' })
       setForm(defaults)
       setErrors({})
     }
@@ -19,14 +16,12 @@ export default function Modal({ isOpen, title, fields, initialData, onSave, onCl
 
   if (!isOpen) return null
 
-  const set = (name, value) => setForm((p) => ({ ...p, [name]: value }))
+  const set = (name, value) => setForm(p => ({ ...p, [name]: value }))
 
   const validate = () => {
     const errs = {}
-    fields?.forEach((f) => {
-      if (f.required && !form[f.name] && form[f.name] !== 0) {
-        errs[f.name] = 'Campo obrigatório'
-      }
+    fields?.forEach(f => {
+      if (f.required && !form[f.name] && form[f.name] !== 0) errs[f.name] = 'Campo obrigatorio'
     })
     setErrors(errs)
     return Object.keys(errs).length === 0
@@ -35,46 +30,28 @@ export default function Modal({ isOpen, title, fields, initialData, onSave, onCl
   const handleSave = () => {
     if (!validate()) return
     const parsed = {}
-    fields?.forEach((f) => {
-      parsed[f.name] = f.type === 'number' ? parseFloat(form[f.name]) || 0 : form[f.name]
-    })
+    fields?.forEach(f => { parsed[f.name] = f.type === 'number' ? parseFloat(form[f.name]) || 0 : form[f.name] })
     onSave(parsed)
   }
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 1000,
-      background: 'rgba(0,0,0,0.5)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={e => e.target === e.currentTarget && onClose()}
     >
-      <div style={{
-        background: C.branco, borderRadius: 10, width: 480, maxWidth: '90vw',
-        maxHeight: '90vh', overflow: 'auto',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-      }}>
-        {/* Header */}
-        <div style={{
-          padding: '18px 24px', borderBottom: `1px solid ${C.cinza2}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700 }}>{title}</h3>
-          <button onClick={onClose} style={{
-            background: 'none', border: 'none', fontSize: 20, cursor: 'pointer',
-            color: C.cinza3, lineHeight: 1,
-          }}>×</button>
+      <div className="bg-white dark:bg-gray-800 rounded-xl w-[480px] max-w-[90vw] max-h-[90vh] overflow-auto shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+          <h3 className="text-base font-bold text-gray-900 dark:text-white">{title}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl leading-none cursor-pointer bg-transparent border-none">×</button>
         </div>
-
-        {/* Body */}
-        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {fields?.map((f) => (
+        <div className="px-6 py-5 flex flex-col gap-4">
+          {fields?.map(f => (
             <InputField
               key={f.name}
               label={f.label}
               type={f.type || 'text'}
               value={form[f.name] ?? ''}
-              onChange={(v) => set(f.name, v)}
+              onChange={v => set(f.name, v)}
               required={f.required}
               error={errors[f.name]}
               options={f.options}
@@ -84,23 +61,11 @@ export default function Modal({ isOpen, title, fields, initialData, onSave, onCl
             />
           ))}
         </div>
-
-        {/* Footer */}
-        <div style={{
-          padding: '14px 24px', borderTop: `1px solid ${C.cinza2}`,
-          display: 'flex', justifyContent: 'flex-end', gap: 10,
-        }}>
-          <button onClick={onClose} style={{
-            padding: '8px 20px', borderRadius: 6, border: `1px solid ${C.cinza2}`,
-            background: C.branco, cursor: 'pointer', fontFamily: 'inherit', fontSize: 14,
-          }}>
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+          <button onClick={onClose} className="px-5 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors cursor-pointer">
             Cancelar
           </button>
-          <button onClick={handleSave} style={{
-            padding: '8px 20px', borderRadius: 6, border: 'none',
-            background: C.amarelo, color: C.preto, fontWeight: 700,
-            cursor: 'pointer', fontFamily: 'inherit', fontSize: 14,
-          }}>
+          <button onClick={handleSave} className="px-5 py-2 rounded-lg bg-primary text-white font-bold text-sm hover:bg-primary-600 transition-colors cursor-pointer">
             Salvar
           </button>
         </div>

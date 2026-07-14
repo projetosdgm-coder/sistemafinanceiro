@@ -1,35 +1,27 @@
-import { C } from '../styles/tokens'
-
-export default function InputField({
+﻿export default function InputField({
   label, value, onChange, type = 'text', prefix, suffix,
   required, error, disabled, options, placeholder,
 }) {
   const isSelect = type === 'select'
-  const base = {
-    width: '100%',
-    padding: '8px 10px',
-    border: `1.5px solid ${disabled ? C.cinza2 : C.azul}`,
-    borderRadius: 6,
-    background: disabled ? C.cinza : C.azulL,
-    color: disabled ? C.preto : C.azul,
-    fontSize: 14,
-    fontFamily: 'inherit',
-    fontWeight: 500,
-    outline: 'none',
-  }
+  const inputCls = [
+    'w-full px-3 py-2 rounded-lg border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors',
+    disabled
+      ? 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+      : 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300',
+  ].join(' ')
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <div className="flex flex-col gap-1">
       {label && (
-        <label style={{ fontSize: 12, fontWeight: 600, color: C.cinza3 }}>
-          {label}{required && <span style={{ color: C.verm }}> *</span>}
+        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+          {label}{required && <span className="text-red-500"> *</span>}
         </label>
       )}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        {prefix && <span style={{ fontSize: 13, color: C.cinza3 }}>{prefix}</span>}
+      <div className="flex items-center gap-2">
+        {prefix && <span className="text-sm text-gray-400 shrink-0">{prefix}</span>}
         {isSelect ? (
-          <select value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} style={base}>
-            {options?.map((o) => (
+          <select value={value} onChange={e => onChange(e.target.value)} disabled={disabled} className={inputCls}>
+            {options?.map(o => (
               <option key={o.value ?? o} value={o.value ?? o}>{o.label ?? o}</option>
             ))}
           </select>
@@ -37,17 +29,17 @@ export default function InputField({
           <input
             type={type}
             value={value}
-            onChange={(e) => onChange(type === 'number' ? e.target.value : e.target.value)}
+            onChange={e => onChange(e.target.value)}
             disabled={disabled}
             placeholder={placeholder}
             step={type === 'number' ? 'any' : undefined}
             min={type === 'number' ? 0 : undefined}
-            style={base}
+            className={inputCls}
           />
         )}
-        {suffix && <span style={{ fontSize: 13, color: C.cinza3 }}>{suffix}</span>}
+        {suffix && <span className="text-sm text-gray-400 shrink-0">{suffix}</span>}
       </div>
-      {error && <span style={{ fontSize: 11, color: C.verm }}>{error}</span>}
+      {error && <span className="text-xs text-red-500">{error}</span>}
     </div>
   )
 }

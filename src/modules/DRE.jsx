@@ -1,72 +1,59 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import useStore from '../store/useStore'
-import { C } from '../styles/tokens'
 import { fmtR, fmtP } from '../utils/formatters'
 import { calcularCMVReal, calcularCMO, calcularDRE } from '../utils/calculations'
 import Toast from '../components/Toast'
 const loadPDF   = () => import('../utils/exportPDF')
 const loadExcel = () => import('../utils/exportExcel')
 
+const NUM_CLS = 'w-32 px-2 py-1.5 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-semibold text-sm text-right focus:outline-none'
+const PCT_CLS = 'w-20 px-2 py-1.5 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-semibold text-sm text-right focus:outline-none'
+
 function NumInput({ value, onChange }) {
   return (
-    <input
-      type="number" min={0} step="any"
-      defaultValue={value}
-      key={value}
-      onBlur={(e) => onChange(parseFloat(e.target.value) || 0)}
-      style={{
-        width: 130, padding: '5px 8px', borderRadius: 6,
-        border: `1.5px solid ${C.azul}`, background: C.azulL,
-        color: C.azul, fontWeight: 600, fontSize: 13,
-        fontFamily: 'inherit', textAlign: 'right', outline: 'none',
-      }}
+    <input type="number" min={0} step="any" defaultValue={value} key={value}
+      onBlur={e => onChange(parseFloat(e.target.value) || 0)}
+      className={NUM_CLS}
     />
   )
 }
 
 function PctInput({ value, onChange }) {
   return (
-    <input
-      type="number" min={0} max={1} step="0.001"
-      defaultValue={(value * 100).toFixed(1)}
-      key={value}
-      onBlur={(e) => onChange(parseFloat(e.target.value) / 100 || 0)}
-      style={{
-        width: 80, padding: '5px 8px', borderRadius: 6,
-        border: `1.5px solid ${C.azul}`, background: C.azulL,
-        color: C.azul, fontWeight: 600, fontSize: 13,
-        fontFamily: 'inherit', textAlign: 'right', outline: 'none',
-      }}
-    />
+    <div className="flex items-center gap-1 justify-end">
+      <input type="number" min={0} max={1} step="0.001" defaultValue={(value * 100).toFixed(1)} key={value}
+        onBlur={e => onChange(parseFloat(e.target.value) / 100 || 0)}
+        className={PCT_CLS}
+      />
+      <span className="text-xs text-gray-400">%</span>
+    </div>
   )
 }
 
-function Row({ label, value, rl, indent = 0, bold, color, input }) {
-  const pct = rl > 0 ? value / rl : 0
+function SectionRow({ title }) {
   return (
-    <tr>
-      <td style={{ padding: '8px 16px', fontSize: 13, paddingLeft: 16 + indent * 20, fontWeight: bold ? 700 : 400, color: color || C.preto }}>
-        {label}
-      </td>
-      <td style={{ padding: '8px 16px', fontSize: 13, textAlign: 'right', width: 160 }}>
-        {input || null}
-      </td>
-      <td style={{ padding: '8px 16px', fontSize: 13, textAlign: 'right', fontWeight: bold ? 700 : 400, color: color || C.preto, width: 140 }}>
-        {fmtR(value)}
-      </td>
-      <td style={{ padding: '8px 16px', fontSize: 12, textAlign: 'right', color: C.cinza3, width: 80 }}>
-        {rl > 0 ? fmtP(pct) : '—'}
-      </td>
+    <tr className="bg-gray-50 dark:bg-gray-900/50">
+      <td colSpan={4} className="px-4 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</td>
     </tr>
   )
 }
 
-function Section({ title }) {
+function Row({ label, value, rl, indent = 0, bold, positive, negative, input }) {
+  const pct = rl > 0 ? value / rl : 0
+  const colorCls = negative
+    ? 'text-red-600 dark:text-red-400'
+    : positive
+    ? 'text-green-600 dark:text-green-400'
+    : bold ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'
+
   return (
-    <tr style={{ background: C.cinza }}>
-      <td colSpan={4} style={{ padding: '8px 16px', fontSize: 12, fontWeight: 700, color: C.cinza3, letterSpacing: 0.5 }}>
-        {title}
+    <tr className="border-t border-gray-100 dark:border-gray-700">
+      <td className={`px-4 py-2 text-sm ${bold ? 'font-bold' : ''} ${colorCls}`} style={{ paddingLeft: 16 + indent * 20 }}>
+        {label}
       </td>
+      <td className="px-4 py-2 text-right w-44">{input || null}</td>
+      <td className={`px-4 py-2 text-sm text-right w-36 ${bold ? 'font-bold' : ''} ${colorCls}`}>{fmtR(value)}</td>
+      <td className="px-4 py-2 text-xs text-right text-gray-400 dark:text-gray-500 w-20">{rl > 0 ? fmtP(pct) : '—'}</td>
     </tr>
   )
 }
@@ -84,88 +71,86 @@ export default function DRE() {
   const rl      = r.rl || 1
 
   return (
-    <div style={{ padding: 32 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>📑 DRE — Demonstrativo de Resultado</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 12, color: C.cinza3 }}>
-            Campos em <span style={{ color: C.azul, fontWeight: 700 }}>azul</span> são editáveis
-          </span>
-          <button onClick={() => loadPDF().then(m => m.exportDREPDF(store, store.restaurante))} style={btnExport}>📄 PDF</button>
-          <button onClick={() => loadExcel().then(m => m.exportDREExcel(store))} style={btnExport}>📊 Excel</button>
+    <div className="p-6 md:p-8 space-y-6 max-w-5xl">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">DRE — Demonstrativo de Resultado</h2>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-gray-400">Campos em <span className="text-blue-500 font-bold">azul</span> sao editaveis</span>
+          <button onClick={() => loadPDF().then(m => m.exportDREPDF(store, store.restaurante))}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+            PDF
+          </button>
+          <button onClick={() => loadExcel().then(m => m.exportDREExcel(store))}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+            Excel
+          </button>
         </div>
       </div>
 
-      <div style={{ background: C.branco, borderRadius: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: '#111', color: C.branco }}>
-              <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 13, fontWeight: 700 }}>DESCRIÇÃO</th>
-              <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12, fontWeight: 600, color: '#888' }}>INPUT</th>
-              <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: 13, fontWeight: 700 }}>VALOR</th>
-              <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12, fontWeight: 600, color: '#888' }}>% RL</th>
-            </tr>
-          </thead>
-          <tbody>
-            <Section title="RECEITA BRUTA" />
-            <Row label="Salão"    value={dre.salao||0}    rl={rl} indent={1} input={<NumInput value={dre.salao||0}    onChange={set('salao')} />} />
-            <Row label="Delivery" value={dre.delivery||0} rl={rl} indent={1} input={<NumInput value={dre.delivery||0} onChange={set('delivery')} />} />
-            <Row label="iFood"    value={dre.ifood||0}    rl={rl} indent={1} input={<NumInput value={dre.ifood||0}    onChange={set('ifood')} />} />
-            <Row label="Eventos"  value={dre.eventos||0}  rl={rl} indent={1} input={<NumInput value={dre.eventos||0}  onChange={set('eventos')} />} />
-            <Row label="RECEITA BRUTA TOTAL" value={r.rb} rl={rl} bold color={C.preto} />
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-900 dark:bg-gray-950">
+                <th className="px-4 py-3 text-left text-sm font-bold text-white">DESCRICAO</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 w-44">INPUT</th>
+                <th className="px-4 py-3 text-right text-sm font-bold text-white w-36">VALOR</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 w-20">% RL</th>
+              </tr>
+            </thead>
+            <tbody>
+              <SectionRow title="RECEITA BRUTA" />
+              <Row label="Salao"    value={dre.salao||0}    rl={rl} indent={1} input={<NumInput value={dre.salao||0}    onChange={set('salao')} />} />
+              <Row label="Delivery" value={dre.delivery||0} rl={rl} indent={1} input={<NumInput value={dre.delivery||0} onChange={set('delivery')} />} />
+              <Row label="iFood"    value={dre.ifood||0}    rl={rl} indent={1} input={<NumInput value={dre.ifood||0}    onChange={set('ifood')} />} />
+              <Row label="Eventos"  value={dre.eventos||0}  rl={rl} indent={1} input={<NumInput value={dre.eventos||0}  onChange={set('eventos')} />} />
+              <Row label="RECEITA BRUTA TOTAL" value={r.rb} rl={rl} bold />
 
-            <Section title="DEDUÇÕES" />
-            <Row label={`Impostos (${fmtP(dre.imp_pct||0)})`} value={r.rb*(dre.imp_pct||0)} rl={rl} indent={1}
-              input={<><PctInput value={dre.imp_pct||0} onChange={set('imp_pct')} /><span style={{ fontSize: 11, color: C.cinza3 }}> %</span></>} />
-            <Row label={`Taxas cartão (${fmtP(dre.taxa_pct||0)})`} value={r.rb*(dre.taxa_pct||0)} rl={rl} indent={1}
-              input={<><PctInput value={dre.taxa_pct||0} onChange={set('taxa_pct')} /><span style={{ fontSize: 11, color: C.cinza3 }}> %</span></>} />
-            <Row label="Devoluções" value={dre.dev||0} rl={rl} indent={1} input={<NumInput value={dre.dev||0} onChange={set('dev')} />} />
-            <Row label="TOTAL DEDUÇÕES" value={r.ded} rl={rl} bold color={C.verm} />
+              <SectionRow title="DEDUCOES" />
+              <Row label={`Impostos (${fmtP(dre.imp_pct||0)})`} value={r.rb*(dre.imp_pct||0)} rl={rl} indent={1} input={<PctInput value={dre.imp_pct||0} onChange={set('imp_pct')} />} />
+              <Row label={`Taxas cartao (${fmtP(dre.taxa_pct||0)})`} value={r.rb*(dre.taxa_pct||0)} rl={rl} indent={1} input={<PctInput value={dre.taxa_pct||0} onChange={set('taxa_pct')} />} />
+              <Row label="Devolucoes" value={dre.dev||0} rl={rl} indent={1} input={<NumInput value={dre.dev||0} onChange={set('dev')} />} />
+              <Row label="TOTAL DEDUCOES" value={r.ded} rl={rl} bold negative />
 
-            <Row label="RECEITA LÍQUIDA" value={r.rl} rl={rl} bold color={C.preto} />
+              <Row label="RECEITA LIQUIDA" value={r.rl} rl={rl} bold />
 
-            <Section title="CMV — CUSTO DE MERCADORIA VENDIDA" />
-            <Row label="CMV Real (do estoque)" value={cmvReal} rl={rl} indent={1} />
-            <Row label="LUCRO BRUTO" value={r.lb} rl={rl} bold color={r.lb >= 0 ? C.verde : C.verm} />
+              <SectionRow title="CMV — CUSTO DE MERCADORIA VENDIDA" />
+              <Row label="CMV Real (do estoque)" value={cmvReal} rl={rl} indent={1} />
+              <Row label="LUCRO BRUTO" value={r.lb} rl={rl} bold positive={r.lb >= 0} negative={r.lb < 0} />
 
-            <Section title="CMO — CUSTO DE MÃO DE OBRA" />
-            <Row label="Total CMO (calculado)" value={cmo} rl={rl} indent={1} />
+              <SectionRow title="CMO — CUSTO DE MAO DE OBRA" />
+              <Row label="Total CMO (calculado)" value={cmo} rl={rl} indent={1} />
 
-            <Section title="DESPESAS OPERACIONAIS" />
-            {[
-              ['aluguel','Aluguel'],['energia','Energia'],['agua','Água'],
-              ['internet','Internet'],['marketing','Marketing'],['contabil','Contabilidade'],
-              ['manut','Manutenção'],['seguros','Seguros'],['pdv','PDV / Sistema'],
-              ['limpeza','Limpeza'],['outros','Outros'],
-            ].map(([f, l]) => (
-              <Row key={f} label={l} value={dre[f]||0} rl={rl} indent={1}
-                input={<NumInput value={dre[f]||0} onChange={set(f)} />} />
-            ))}
-            <Row label="TOTAL DESPESAS" value={r.desp} rl={rl} bold />
+              <SectionRow title="DESPESAS OPERACIONAIS" />
+              {[
+                ['aluguel','Aluguel'],['energia','Energia'],['agua','Agua'],
+                ['internet','Internet'],['marketing','Marketing'],['contabil','Contabilidade'],
+                ['manut','Manutencao'],['seguros','Seguros'],['pdv','PDV / Sistema'],
+                ['limpeza','Limpeza'],['outros','Outros'],
+              ].map(([f, l]) => (
+                <Row key={f} label={l} value={dre[f]||0} rl={rl} indent={1} input={<NumInput value={dre[f]||0} onChange={set(f)} />} />
+              ))}
+              <Row label="TOTAL DESPESAS" value={r.desp} rl={rl} bold />
 
-            <Row label="EBITDA" value={r.ebitda} rl={rl} bold color={r.ebitda >= 0 ? C.verde : C.verm} />
+              <Row label="EBITDA" value={r.ebitda} rl={rl} bold positive={r.ebitda >= 0} negative={r.ebitda < 0} />
 
-            <Section title="AJUSTES ABAIXO DO EBITDA" />
-            <Row label="Depreciação"  value={dre.depre||0}    rl={rl} indent={1} input={<NumInput value={dre.depre||0}    onChange={set('depre')} />} />
-            <Row label="Juros"        value={dre.juros||0}    rl={rl} indent={1} input={<NumInput value={dre.juros||0}    onChange={set('juros')} />} />
-            <Row label="Parcelas"     value={dre.parcelas||0} rl={rl} indent={1} input={<NumInput value={dre.parcelas||0} onChange={set('parcelas')} />} />
-            <Row label="IR / CSLL"    value={dre.ir||0}       rl={rl} indent={1} input={<NumInput value={dre.ir||0}       onChange={set('ir')} />} />
-            <Row label="TOTAL AJUSTES" value={r.ajustes + (dre.ir||0)} rl={rl} bold />
+              <SectionRow title="AJUSTES ABAIXO DO EBITDA" />
+              <Row label="Depreciacao"  value={dre.depre||0}    rl={rl} indent={1} input={<NumInput value={dre.depre||0}    onChange={set('depre')} />} />
+              <Row label="Juros"        value={dre.juros||0}    rl={rl} indent={1} input={<NumInput value={dre.juros||0}    onChange={set('juros')} />} />
+              <Row label="Parcelas"     value={dre.parcelas||0} rl={rl} indent={1} input={<NumInput value={dre.parcelas||0} onChange={set('parcelas')} />} />
+              <Row label="IR / CSLL"    value={dre.ir||0}       rl={rl} indent={1} input={<NumInput value={dre.ir||0}       onChange={set('ir')} />} />
+              <Row label="TOTAL AJUSTES" value={r.ajustes + (dre.ir||0)} rl={rl} bold />
 
-            <tr style={{ background: r.ll >= 0 ? C.verdeL : C.vermL }}>
-              <td colSpan={4} style={{ height: 1, padding: 0 }} />
-            </tr>
-            <Row label="LUCRO LÍQUIDO" value={r.ll} rl={rl} bold color={r.ll >= 0 ? C.verde : C.verm} />
-          </tbody>
-        </table>
+              <tr className={r.ll >= 0 ? 'bg-green-50 dark:bg-green-900/10' : 'bg-red-50 dark:bg-red-900/10'}>
+                <td colSpan={4} className="h-1 p-0" />
+              </tr>
+              <Row label="LUCRO LIQUIDO" value={r.ll} rl={rl} bold positive={r.ll >= 0} negative={r.ll < 0} />
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <Toast message={toast} onDone={() => setToast('')} />
     </div>
   )
-}
-
-const btnExport = {
-  padding: '7px 14px', borderRadius: 6, border: `1px solid ${C.cinza2}`,
-  background: C.branco, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600,
 }

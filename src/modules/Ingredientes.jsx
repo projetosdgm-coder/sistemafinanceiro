@@ -1,19 +1,20 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import useStore from '../store/useStore'
-import { C } from '../styles/tokens'
 import { fmtR } from '../utils/formatters'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Toast from '../components/Toast'
 
 const FIELDS = [
-  { name: 'nome',  label: 'Nome',        type: 'text',   required: true },
-  { name: 'cat',   label: 'Categoria',   type: 'text',   required: true, placeholder: 'ex: Proteínas' },
-  { name: 'un',    label: 'Unidade',     type: 'select', required: true,
-    options: ['kg', 'un', 'L', 'g', 'ml', 'cx', 'pct'] },
-  { name: 'preco', label: 'Preço (R$)',  type: 'number', required: true, prefix: 'R$' },
-  { name: 'forn',  label: 'Fornecedor',  type: 'text' },
+  { name: 'nome',  label: 'Nome',       type: 'text',   required: true },
+  { name: 'cat',   label: 'Categoria',  type: 'text',   required: true, placeholder: 'ex: Proteinas' },
+  { name: 'un',    label: 'Unidade',    type: 'select', required: true, options: ['kg','un','L','g','ml','cx','pct'] },
+  { name: 'preco', label: 'Preco (R$)', type: 'number', required: true, prefix: 'R$' },
+  { name: 'forn',  label: 'Fornecedor', type: 'text' },
 ]
+
+const TH = 'px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap'
+const TD = 'px-4 py-3 text-sm text-gray-700 dark:text-gray-300 align-middle'
 
 export default function Ingredientes() {
   const { ingredientes, addIngrediente, updateIngrediente, deleteIngrediente } = useStore()
@@ -23,7 +24,7 @@ export default function Ingredientes() {
   const [busca, setBusca] = useState('')
 
   const filtrados = useMemo(() =>
-    ingredientes.filter((i) =>
+    ingredientes.filter(i =>
       i.nome.toLowerCase().includes(busca.toLowerCase()) ||
       i.cat?.toLowerCase().includes(busca.toLowerCase())
     ), [ingredientes, busca])
@@ -39,64 +40,57 @@ export default function Ingredientes() {
     setModal({ open: false, data: null })
   }
 
-  const handleDelete = () => {
-    deleteIngrediente(confirm)
-    setConfirm(null)
-    setToast('Ingrediente excluído!')
-  }
-
   return (
-    <div style={{ padding: 32 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>🧂 Ingredientes</h2>
-        <button onClick={() => setModal({ open: true, data: null })} style={btnPrimary}>
+    <div className="p-6 md:p-8 space-y-6 max-w-7xl">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Ingredientes</h2>
+        <button onClick={() => setModal({ open: true, data: null })} className="px-4 py-2 rounded-lg bg-primary text-white font-bold text-sm hover:bg-primary-600 transition-colors cursor-pointer">
           + Novo Ingrediente
         </button>
       </div>
 
-      {/* Busca */}
-      <div style={{ marginBottom: 16 }}>
-        <input
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          placeholder="Buscar por nome ou categoria..."
-          style={{
-            padding: '8px 14px', borderRadius: 6, border: `1px solid ${C.cinza2}`,
-            fontSize: 13, width: 280, fontFamily: 'inherit', outline: 'none',
-          }}
-        />
-      </div>
+      <input
+        value={busca}
+        onChange={e => setBusca(e.target.value)}
+        placeholder="Buscar por nome ou categoria..."
+        className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 w-72"
+      />
 
-      {/* Tabela */}
-      <div style={{ background: C.branco, borderRadius: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: C.cinza }}>
-              {['Nome', 'Categoria', 'Unidade', 'Preço Unit.', 'Fornecedor', 'Ações'].map((h) => (
-                <th key={h} style={thStyle}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtrados.length === 0 && (
-              <tr><td colSpan={6} style={{ padding: 24, textAlign: 'center', color: C.cinza3 }}>Nenhum ingrediente encontrado.</td></tr>
-            )}
-            {filtrados.map((ing, idx) => (
-              <tr key={ing.id} style={{ borderTop: `1px solid ${C.cinza2}`, background: idx % 2 === 0 ? C.branco : '#FAFAFA' }}>
-                <td style={tdStyle}>{ing.nome}</td>
-                <td style={tdStyle}>{ing.cat}</td>
-                <td style={tdStyle}>{ing.un}</td>
-                <td style={tdStyle}>{fmtR(ing.preco)}</td>
-                <td style={tdStyle}>{ing.forn || '—'}</td>
-                <td style={{ ...tdStyle, display: 'flex', gap: 6 }}>
-                  <button onClick={() => setModal({ open: true, data: ing })} style={btnEdit}>✏️ Editar</button>
-                  <button onClick={() => setConfirm(ing.id)} style={btnDel}>🗑️</button>
-                </td>
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-900/50">
+                {['Nome','Categoria','Unidade','Preco Unit.','Fornecedor','Acoes'].map(h => (
+                  <th key={h} className={TH}>{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-        <div style={{ padding: '10px 16px', borderTop: `1px solid ${C.cinza2}`, fontSize: 12, color: C.cinza3 }}>
+            </thead>
+            <tbody>
+              {filtrados.length === 0 && (
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400 dark:text-gray-500">Nenhum ingrediente encontrado.</td></tr>
+              )}
+              {filtrados.map((ing, idx) => (
+                <tr key={ing.id} className={`border-t border-gray-100 dark:border-gray-700 ${idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900/30'}`}>
+                  <td className={`${TD} font-medium text-gray-900 dark:text-white`}>{ing.nome}</td>
+                  <td className={TD}>{ing.cat}</td>
+                  <td className={TD}>{ing.un}</td>
+                  <td className={TD}>{fmtR(ing.preco)}</td>
+                  <td className={TD}>{ing.forn || '—'}</td>
+                  <td className={`${TD} flex gap-2`}>
+                    <button onClick={() => setModal({ open: true, data: ing })} className="px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors cursor-pointer">
+                      Editar
+                    </button>
+                    <button onClick={() => setConfirm(ing.id)} className="px-3 py-1.5 rounded-md border border-red-100 dark:border-red-900 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors cursor-pointer">
+                      Excluir
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="px-4 py-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-700">
           {filtrados.length} ingrediente(s)
         </div>
       </div>
@@ -111,29 +105,10 @@ export default function Ingredientes() {
       />
       <ConfirmDialog
         isOpen={!!confirm}
-        onConfirm={handleDelete}
+        onConfirm={() => { deleteIngrediente(confirm); setConfirm(null); setToast('Ingrediente excluido!') }}
         onCancel={() => setConfirm(null)}
       />
       <Toast message={toast} onDone={() => setToast('')} />
     </div>
   )
-}
-
-const btnPrimary = {
-  padding: '9px 18px', borderRadius: 6, border: 'none',
-  background: C.amarelo, color: C.preto, fontWeight: 700,
-  cursor: 'pointer', fontFamily: 'inherit', fontSize: 14,
-}
-const thStyle = {
-  padding: '10px 16px', textAlign: 'left', fontSize: 12,
-  fontWeight: 600, color: C.cinza3, whiteSpace: 'nowrap',
-}
-const tdStyle = { padding: '10px 16px', fontSize: 13, verticalAlign: 'middle' }
-const btnEdit = {
-  padding: '4px 10px', borderRadius: 5, border: `1px solid ${C.cinza2}`,
-  background: C.branco, cursor: 'pointer', fontSize: 12, fontFamily: 'inherit',
-}
-const btnDel = {
-  padding: '4px 8px', borderRadius: 5, border: `1px solid ${C.vermL}`,
-  background: C.vermL, cursor: 'pointer', fontSize: 12, fontFamily: 'inherit',
 }

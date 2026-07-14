@@ -1,211 +1,197 @@
-import { useState, useRef, useCallback } from 'react'
+﻿import { useState, useRef, useCallback } from 'react'
 import useStore from '../store/useStore'
-import { C } from '../styles/tokens'
 import { fmtR } from '../utils/formatters'
 
-const CATS = ['Panificação','Proteínas','Laticínios','Hortifrúti','Molhos','Óleos','Bebidas','Embalagens','Condimentos','Outros']
 const UNS  = ['un','kg','g','L','ml','cx','pc','fd','lt','sc']
 const ACCEPT = '.jpg,.jpeg,.png,.pdf,.heic,.heif'
 
-// ── Tela: upload ──────────────────────────────────────────────────────────────
-function TelaUpload({ onFile }) {
+function DropZone({ onFile, title, subtitle, icon }) {
   const [drag, setDrag] = useState(false)
   const ref = useRef()
-
   const handleDrop = useCallback(e => {
     e.preventDefault(); setDrag(false)
-    const f = e.dataTransfer.files[0]
-    if (f) onFile(f)
+    const f = e.dataTransfer.files[0]; if (f) onFile(f)
   }, [onFile])
-
   return (
-    <div style={{ maxWidth: 520, margin: '40px auto', padding: 32 }}>
-      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24 }}>🧾 Lançamento por Nota Fiscal</h2>
+    <div
+      onDragOver={e => { e.preventDefault(); setDrag(true) }}
+      onDragLeave={() => setDrag(false)}
+      onDrop={handleDrop}
+      onClick={() => ref.current.click()}
+      className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${drag ? 'border-primary bg-primary-50 dark:bg-orange-900/20' : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-primary/50'}`}
+    >
+      <div className="text-5xl mb-3">{icon}</div>
+      <div className="font-bold text-gray-800 dark:text-white text-base mb-2">Arraste aqui ou clique para selecionar</div>
+      <div className="text-gray-400 dark:text-gray-500 text-sm">{subtitle}</div>
+      <input ref={ref} type="file" accept={ACCEPT} onChange={e => e.target.files[0] && onFile(e.target.files[0])} className="hidden" />
+    </div>
+  )
+}
 
-      <div
-        onDragOver={e => { e.preventDefault(); setDrag(true) }}
-        onDragLeave={() => setDrag(false)}
-        onDrop={handleDrop}
-        onClick={() => ref.current.click()}
-        style={{
-          border: `2px dashed ${drag ? C.amarelo : C.cinza2}`,
-          borderRadius: 12, padding: '48px 32px', textAlign: 'center',
-          cursor: 'pointer', transition: 'all 0.2s',
-          background: drag ? '#FFFDE7' : C.branco,
-        }}
-      >
-        <div style={{ fontSize: 48, marginBottom: 12 }}>📎</div>
-        <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 8 }}>
-          Arraste aqui ou clique para selecionar
-        </div>
-        <div style={{ color: C.cinza3, fontSize: 12 }}>
-          JPG · PNG · PDF · HEIC (foto de iPhone)
-        </div>
-        <input ref={ref} type="file" accept={ACCEPT} onChange={e => e.target.files[0] && onFile(e.target.files[0])} style={{ display: 'none' }} />
-      </div>
-
-      <div style={{ marginTop: 20, background: C.cinza, borderRadius: 8, padding: '12px 16px', fontSize: 12, color: C.cinza3 }}>
-        <strong style={{ color: C.preto }}>Como funciona:</strong> A IA lê a nota, identifica os ingredientes,
-        casa com o seu cadastro e apresenta um resumo para você confirmar antes de importar.
+function TelaUpload({ onFile }) {
+  return (
+    <div className="max-w-lg mx-auto p-8 space-y-6">
+      <h2 className="text-xl font-bold text-gray-900 dark:text-white">Lancamento por Nota Fiscal</h2>
+      <DropZone onFile={onFile} icon="📎" subtitle="JPG · PNG · PDF · HEIC (foto de iPhone)" />
+      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+        <strong className="text-gray-700 dark:text-gray-300">Como funciona:</strong> A IA le a nota, identifica os ingredientes e apresenta um resumo para confirmar antes de importar.
       </div>
     </div>
   )
 }
 
-// ── Tela: analisando ──────────────────────────────────────────────────────────
 function TelaAnalisando({ fileName }) {
   return (
-    <div style={{ maxWidth: 400, margin: '80px auto', textAlign: 'center', padding: 32 }}>
-      <div style={{ fontSize: 48, marginBottom: 20, animation: 'spin 2s linear infinite' }}>🔄</div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Analisando nota fiscal...</h2>
-      <p style={{ color: C.cinza3, fontSize: 13 }}>{fileName}</p>
+    <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center p-8">
+      <div className="text-5xl animate-spin">⏳</div>
+      <h2 className="text-lg font-bold text-gray-900 dark:text-white">Analisando nota fiscal...</h2>
+      <p className="text-gray-400 dark:text-gray-500 text-sm">{fileName}</p>
     </div>
   )
 }
 
-// ── Tela: confirmação ─────────────────────────────────────────────────────────
 function TelaConfirmacao({ resultado, itens, setItens, ingredientes, onConfirmar, onCancelar, loading }) {
   const updateItem = (idx, campo, valor) =>
     setItens(prev => prev.map((it, i) => i === idx ? { ...it, [campo]: valor } : it))
-
   const total = itens.filter(i => i.incluir).reduce((s, i) => s + (parseFloat(i.precoTotal) || 0), 0)
   const novos = itens.filter(i => i.incluir && !i.ing_id).length
 
   return (
-    <div style={{ padding: '24px 32px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+    <div className="p-6 md:p-8 space-y-5 max-w-5xl">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Confirmar importação</h2>
-          <div style={{ fontSize: 13, color: C.cinza3 }}>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Confirmar importacao</h2>
+          <div className="text-sm text-gray-400 dark:text-gray-500 flex gap-4">
             {resultado.fornecedor && <span>📍 {resultado.fornecedor}</span>}
-            {resultado.data && <span style={{ marginLeft: 12 }}>📅 {resultado.data}</span>}
+            {resultado.data && <span>📅 {resultado.data}</span>}
           </div>
         </div>
-        <button onClick={onCancelar} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.cinza3 }}>✕</button>
+        <button onClick={onCancelar} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl bg-transparent border-none cursor-pointer">✕</button>
       </div>
 
-      <div style={{ display: 'flex', gap: 16, marginBottom: 16, fontSize: 11 }}>
-        <span style={{ ...badge('#E8F5E9','#1B5E20') }}>🟢 Ingrediente casado</span>
-        <span style={{ ...badge('#FFF8E1','#E65100') }}>🟡 Ingrediente novo</span>
-        <span style={{ ...badge('#FFEBEE','#B71C1C') }}>⊘ Ignorar</span>
+      <div className="flex gap-3 flex-wrap">
+        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400">Ingrediente casado</span>
+        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">Ingrediente novo</span>
+        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">Ignorado</span>
       </div>
 
-      <div style={{ overflowX: 'auto', marginBottom: 20 }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-          <thead>
-            <tr style={{ background: C.cinza }}>
-              {['✓','Item na Nota','Ingrediente no Sistema','Qtd','Un','Preço Unit.','Total'].map(h => (
-                <th key={h} style={thS}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {itens.map((item, idx) => (
-              <tr key={idx} style={{
-                borderTop: `1px solid ${C.cinza2}`,
-                background: !item.incluir ? '#FAFAFA' : item.ing_id ? '#FAFFFE' : '#FFFDF0',
-                opacity: item.incluir ? 1 : 0.5,
-              }}>
-                <td style={{ ...tdS, width: 32, textAlign: 'center' }}>
-                  <input type="checkbox" checked={item.incluir}
-                    onChange={e => updateItem(idx, 'incluir', e.target.checked)} />
-                </td>
-                <td style={tdS}><div style={{ fontWeight: 600, maxWidth: 180 }}>{item.nome_nota}</div></td>
-                <td style={{ ...tdS, minWidth: 180 }}>
-                  <select
-                    value={item.ing_id || '__novo__'}
-                    onChange={e => updateItem(idx, 'ing_id', e.target.value === '__novo__' ? null : e.target.value)}
-                    style={selectS} disabled={!item.incluir}
-                  >
-                    <option value="__novo__">+ Novo ingrediente</option>
-                    {ingredientes.map(i => <option key={i.id} value={i.id}>{i.nome} ({i.un})</option>)}
-                  </select>
-                  {!item.ing_id && item.incluir && (
-                    <input placeholder="Nome do novo ingrediente" value={item.nome_novo || ''}
-                      onChange={e => updateItem(idx, 'nome_novo', e.target.value)}
-                      style={{ ...selectS, marginTop: 4, borderColor: C.laranja }} />
-                  )}
-                </td>
-                <td style={{ ...tdS, width: 70 }}>
-                  <input type="number" min={0} step="any" value={item.qtd}
-                    onChange={e => updateItem(idx, 'qtd', parseFloat(e.target.value) || 0)}
-                    style={numS} disabled={!item.incluir} />
-                </td>
-                <td style={{ ...tdS, width: 60 }}>
-                  <select value={item.un} onChange={e => updateItem(idx, 'un', e.target.value)}
-                    style={{ ...numS, padding: '4px 2px' }} disabled={!item.incluir}>
-                    {UNS.map(u => <option key={u}>{u}</option>)}
-                  </select>
-                </td>
-                <td style={{ ...tdS, width: 90 }}>
-                  <input type="number" min={0} step="0.01" value={item.precoUnit}
-                    onChange={e => {
-                      const v = parseFloat(e.target.value) || 0
-                      updateItem(idx, 'precoUnit', v)
-                      updateItem(idx, 'precoTotal', v * item.qtd)
-                    }}
-                    style={numS} disabled={!item.incluir} />
-                </td>
-                <td style={{ ...tdS, fontWeight: 600, width: 90 }}>{fmtR(item.precoTotal)}</td>
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-xs">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-900/50">
+                {['','Item na Nota','Ingrediente no Sistema','Qtd','Un','Preco Unit.','Total'].map(h => (
+                  <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr style={{ background: C.cinza, fontWeight: 700 }}>
-              <td colSpan={5} style={tdS} />
-              <td style={tdS}>Total:</td>
-              <td style={{ ...tdS, color: C.verde }}>{fmtR(total)}</td>
-            </tr>
-          </tfoot>
-        </table>
+            </thead>
+            <tbody>
+              {itens.map((item, idx) => (
+                <tr key={idx} className={`border-t border-gray-100 dark:border-gray-700 transition-opacity ${!item.incluir ? 'opacity-40' : item.ing_id ? 'bg-green-50/30 dark:bg-green-900/10' : 'bg-amber-50/30 dark:bg-amber-900/10'}`}>
+                  <td className="px-3 py-2 w-8 text-center">
+                    <input type="checkbox" checked={item.incluir} onChange={e => updateItem(idx,'incluir',e.target.checked)} />
+                  </td>
+                  <td className="px-3 py-2 font-semibold text-gray-800 dark:text-gray-200 max-w-[160px]">{item.nome_nota}</td>
+                  <td className="px-3 py-2 min-w-[170px]">
+                    <select value={item.ing_id || '__novo__'}
+                      onChange={e => updateItem(idx,'ing_id', e.target.value === '__novo__' ? null : e.target.value)}
+                      disabled={!item.incluir}
+                      className="w-full px-2 py-1 rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs focus:outline-none">
+                      <option value="__novo__">+ Novo ingrediente</option>
+                      {ingredientes.map(i => <option key={i.id} value={i.id}>{i.nome} ({i.un})</option>)}
+                    </select>
+                    {!item.ing_id && item.incluir && (
+                      <input placeholder="Nome do novo ingrediente" value={item.nome_novo || ''}
+                        onChange={e => updateItem(idx,'nome_novo',e.target.value)}
+                        className="mt-1 w-full px-2 py-1 rounded border border-primary bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs focus:outline-none" />
+                    )}
+                  </td>
+                  <td className="px-3 py-2 w-20">
+                    <input type="number" min={0} step="any" value={item.qtd}
+                      onChange={e => updateItem(idx,'qtd',parseFloat(e.target.value)||0)}
+                      disabled={!item.incluir}
+                      className="w-full px-2 py-1 rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs text-center focus:outline-none" />
+                  </td>
+                  <td className="px-3 py-2 w-16">
+                    <select value={item.un} onChange={e => updateItem(idx,'un',e.target.value)} disabled={!item.incluir}
+                      className="w-full px-1 py-1 rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs focus:outline-none">
+                      {UNS.map(u => <option key={u}>{u}</option>)}
+                    </select>
+                  </td>
+                  <td className="px-3 py-2 w-24">
+                    <input type="number" min={0} step="0.01" value={item.precoUnit}
+                      onChange={e => {
+                        const v = parseFloat(e.target.value)||0
+                        updateItem(idx,'precoUnit',v)
+                        updateItem(idx,'precoTotal',v*item.qtd)
+                      }}
+                      disabled={!item.incluir}
+                      className="w-full px-2 py-1 rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs text-right focus:outline-none" />
+                  </td>
+                  <td className="px-3 py-2 font-semibold text-gray-900 dark:text-white w-24">{fmtR(item.precoTotal)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="bg-gray-50 dark:bg-gray-900/50 border-t-2 border-gray-200 dark:border-gray-600 font-semibold">
+                <td colSpan={5} className="px-3 py-2" />
+                <td className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">Total:</td>
+                <td className="px-3 py-2 text-sm font-bold text-green-600 dark:text-green-400">{fmtR(total)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
 
       {novos > 0 && (
-        <div style={{ background: '#FFF8E1', border: `1px solid #FFE082`, borderRadius: 8, padding: '10px 16px', marginBottom: 16, fontSize: 12 }}>
-          ⚠️ <strong>{novos} novo{novos > 1 ? 's ingrediente' : ' ingrediente'}</strong> será criado automaticamente.
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+          <strong>{novos} novo{novos > 1 ? 's ingrediente' : ' ingrediente'}</strong> sera criado automaticamente.
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 12 }}>
-        <button onClick={onCancelar} style={btnSec} disabled={loading}>Cancelar</button>
-        <button onClick={onConfirmar} style={{ ...btnPrimary, flex: 1 }} disabled={loading}>
-          {loading ? '⏳ Importando...' : `✅ Confirmar e importar ${itens.filter(i=>i.incluir).length} itens`}
+      <div className="flex gap-3">
+        <button onClick={onCancelar} disabled={loading}
+          className="px-5 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer disabled:opacity-50">
+          Cancelar
+        </button>
+        <button onClick={onConfirmar} disabled={loading}
+          className="flex-1 px-5 py-2.5 rounded-lg bg-gray-900 dark:bg-primary text-white font-bold text-sm hover:bg-gray-800 dark:hover:bg-primary-600 transition-colors cursor-pointer disabled:opacity-50">
+          {loading ? 'Importando...' : `Confirmar e importar ${itens.filter(i=>i.incluir).length} itens`}
         </button>
       </div>
     </div>
   )
 }
 
-// ── Tela: sucesso ─────────────────────────────────────────────────────────────
 function TelaSucesso({ stats, onNova, onVerEstoque }) {
   return (
-    <div style={{ maxWidth: 440, margin: '60px auto', textAlign: 'center', padding: 32 }}>
-      <div style={{ fontSize: 64, marginBottom: 20 }}>✅</div>
-      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 24 }}>Nota importada com sucesso!</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 32 }}>
-        <StatBox label="Itens importados" value={stats.importados} color={C.verde} />
-        <StatBox label="Preços atualizados" value={stats.precos} color={C.azul} />
-        <StatBox label="Novos ingredientes" value={stats.novos} color={C.laranja} />
+    <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center p-8 max-w-md mx-auto">
+      <div className="text-6xl">✅</div>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Nota importada com sucesso!</h2>
+      <div className="grid grid-cols-3 gap-4 w-full mb-4">
+        {[
+          { label: 'Itens importados', value: stats.importados, cls: 'text-green-600 dark:text-green-400' },
+          { label: 'Precos atualizados', value: stats.precos, cls: 'text-blue-600 dark:text-blue-400' },
+          { label: 'Novos ingredientes', value: stats.novos, cls: 'text-primary' },
+        ].map(s => (
+          <div key={s.label} className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+            <div className={`text-2xl font-bold ${s.cls}`}>{s.value}</div>
+            <div className="text-xs text-gray-400 mt-1">{s.label}</div>
+          </div>
+        ))}
       </div>
-      <div style={{ display: 'flex', gap: 12 }}>
-        <button onClick={onVerEstoque} style={{ ...btnSec, flex: 1 }}>📦 Ver Estoque</button>
-        <button onClick={onNova} style={{ ...btnPrimary, flex: 1 }}>+ Nova Nota</button>
+      <div className="flex gap-3 w-full">
+        <button onClick={onVerEstoque} className="flex-1 px-5 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+          Ver Estoque
+        </button>
+        <button onClick={onNova} className="flex-1 px-5 py-2.5 rounded-lg bg-primary text-white font-bold text-sm hover:bg-primary-600 transition-colors cursor-pointer">
+          + Nova Nota
+        </button>
       </div>
     </div>
   )
 }
 
-function StatBox({ label, value, color }) {
-  return (
-    <div style={{ background: C.cinza, borderRadius: 8, padding: '16px 8px' }}>
-      <div style={{ fontSize: 28, fontWeight: 700, color }}>{value}</div>
-      <div style={{ fontSize: 11, color: C.cinza3, marginTop: 4 }}>{label}</div>
-    </div>
-  )
-}
-
-// ── Módulo principal ──────────────────────────────────────────────────────────
 export default function LancamentoNF({ onNav }) {
   const store = useStore()
   const { ingredientes, estoque, updateIngrediente, updateEstoque, addIngrediente, addEstoque } = store
@@ -226,35 +212,27 @@ export default function LancamentoNF({ onNav }) {
       setResultado(res)
       setItens((res.itens || []).map(item => ({ ...item, incluir: true, nome_novo: item.nome_nota })))
       setStatus('confirmando')
-    } catch (e) {
-      setErro(e.message); setStatus('upload')
-    }
+    } catch (e) { setErro(e.message); setStatus('upload') }
   }
 
   const handleConfirmar = () => {
     setLoadingConfirm(true)
     let importados = 0, precos = 0, novos = 0
-
     itens.filter(i => i.incluir).forEach(item => {
       if (item.ing_id) {
         const ing = ingredientes.find(x => x.id === item.ing_id)
-        if (ing && Math.abs(ing.preco - item.precoUnit) > 0.005) {
-          updateIngrediente(item.ing_id, { preco: item.precoUnit, forn: resultado.fornecedor || ing.forn })
-          precos++
-        }
+        if (ing && Math.abs(ing.preco - item.precoUnit) > 0.005) { updateIngrediente(item.ing_id, { preco: item.precoUnit, forn: resultado.fornecedor || ing.forn }); precos++ }
         const est = estoque.find(x => x.ing_id === item.ing_id)
         if (est) updateEstoque(item.ing_id, { compras: (est.compras || 0) + item.qtd })
         else addEstoque({ ing_id: item.ing_id, ei: 0, compras: item.qtd, ef: 0 })
         importados++
       } else {
-        const novoId = `i${Date.now()}${Math.floor(Math.random() * 1000)}`
-        const nome = (item.nome_novo || item.nome_nota).trim()
-        addIngrediente({ id: novoId, nome, cat: 'Outros', un: item.un, preco: item.precoUnit, forn: resultado.fornecedor || '' })
+        const novoId = `i${Date.now()}${Math.floor(Math.random()*1000)}`
+        addIngrediente({ id: novoId, nome: (item.nome_novo || item.nome_nota).trim(), cat: 'Outros', un: item.un, preco: item.precoUnit, forn: resultado.fornecedor || '' })
         addEstoque({ ing_id: novoId, ei: 0, compras: item.qtd, ef: 0 })
         importados++; novos++
       }
     })
-
     setStats({ importados, precos, novos })
     setLoadingConfirm(false)
     setStatus('sucesso')
@@ -263,29 +241,16 @@ export default function LancamentoNF({ onNav }) {
   const resetar = () => { setFile(null); setResultado(null); setItens([]); setErro(''); setStatus('upload') }
 
   return (
-    <div style={{ padding: status === 'confirmando' ? 0 : 32, minHeight: '100%' }}>
+    <div className="min-h-full">
       {erro && (
-        <div style={{ background: C.vermL, border: `1px solid ${C.verm}`, borderRadius: 8, padding: '10px 16px', marginBottom: 20, fontSize: 13, color: C.verm }}>
-          ❌ {erro}
+        <div className="mx-6 mt-6 px-4 py-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
+          {erro}
         </div>
       )}
       {status === 'upload'      && <TelaUpload onFile={handleFile} />}
       {status === 'analisando'  && <TelaAnalisando fileName={file?.name} />}
-      {status === 'confirmando' && (
-        <TelaConfirmacao resultado={resultado} itens={itens} setItens={setItens}
-          ingredientes={ingredientes} onConfirmar={handleConfirmar} onCancelar={resetar} loading={loadingConfirm} />
-      )}
-      {status === 'sucesso' && (
-        <TelaSucesso stats={stats} onNova={resetar} onVerEstoque={() => onNav('estoque')} />
-      )}
+      {status === 'confirmando' && <TelaConfirmacao resultado={resultado} itens={itens} setItens={setItens} ingredientes={ingredientes} onConfirmar={handleConfirmar} onCancelar={resetar} loading={loadingConfirm} />}
+      {status === 'sucesso'     && <TelaSucesso stats={stats} onNova={resetar} onVerEstoque={() => onNav('estoque')} />}
     </div>
   )
 }
-
-const btnPrimary = { padding: '11px 24px', borderRadius: 8, border: 'none', background: C.preto, color: C.amarelo, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }
-const btnSec     = { padding: '11px 20px', borderRadius: 8, border: `1px solid ${C.cinza2}`, background: C.branco, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }
-const thS        = { padding: '9px 10px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: C.cinza3, whiteSpace: 'nowrap' }
-const tdS        = { padding: '8px 10px', fontSize: 12, verticalAlign: 'middle' }
-const numS       = { width: '100%', padding: '4px 6px', border: `1px solid ${C.cinza2}`, borderRadius: 4, fontSize: 12, fontFamily: 'inherit' }
-const selectS    = { width: '100%', padding: '4px 6px', border: `1px solid ${C.cinza2}`, borderRadius: 4, fontSize: 12, fontFamily: 'inherit', background: C.branco }
-const badge      = (bg, color) => ({ background: bg, color, padding: '3px 10px', borderRadius: 20, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 })

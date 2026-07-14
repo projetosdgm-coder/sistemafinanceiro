@@ -1,35 +1,17 @@
-import { C } from '../styles/tokens'
-
-export default function ConfirmDialog({ isOpen, message, onConfirm, onCancel }) {
+﻿export default function ConfirmDialog({ isOpen, message, onConfirm, onCancel }) {
   if (!isOpen) return null
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 2000,
-      background: 'rgba(0,0,0,0.5)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }}>
-      <div style={{
-        background: C.branco, borderRadius: 10, padding: 28,
-        width: 360, maxWidth: '90vw',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-        textAlign: 'center',
-      }}>
-        <div style={{ fontSize: 32, marginBottom: 12 }}>🗑️</div>
-        <p style={{ fontSize: 15, marginBottom: 24, color: C.preto }}>
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-7 w-[360px] max-w-[90vw] shadow-2xl text-center">
+        <div className="text-4xl mb-4">🗑️</div>
+        <p className="text-gray-700 dark:text-gray-300 text-sm mb-6 leading-relaxed">
           {message ?? 'Tem certeza que deseja excluir este registro?'}
         </p>
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-          <button onClick={onCancel} style={{
-            padding: '8px 24px', borderRadius: 6, border: `1px solid ${C.cinza2}`,
-            background: C.branco, cursor: 'pointer', fontFamily: 'inherit', fontSize: 14,
-          }}>
+        <div className="flex gap-3 justify-center">
+          <button onClick={onCancel} className="px-5 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors cursor-pointer">
             Cancelar
           </button>
-          <button onClick={onConfirm} style={{
-            padding: '8px 24px', borderRadius: 6, border: 'none',
-            background: C.verm, color: C.branco, fontWeight: 700,
-            cursor: 'pointer', fontFamily: 'inherit', fontSize: 14,
-          }}>
+          <button onClick={onConfirm} className="px-5 py-2 rounded-lg bg-red-600 text-white font-bold text-sm hover:bg-red-700 transition-colors cursor-pointer">
             Excluir
           </button>
         </div>

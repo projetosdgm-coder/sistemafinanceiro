@@ -1,11 +1,7 @@
-import { useMemo } from 'react'
+﻿import { useMemo } from 'react'
 import useStore from '../store/useStore'
-import { C } from '../styles/tokens'
 import { fmtR, fmtP } from '../utils/formatters'
-import {
-  calcularCMVReal, calcularCMVTeorico, calcularCMO,
-  calcularDRE, calcularCustoPrato,
-} from '../utils/calculations'
+import { calcularCMVReal, calcularCMVTeorico, calcularCMO, calcularDRE, calcularCustoPrato } from '../utils/calculations'
 import { BENCHMARKS } from '../utils/benchmarks'
 import Badge from '../components/Badge'
 const loadExcel = () => import('../utils/exportExcel')
@@ -15,8 +11,12 @@ function statusBench(v, b) {
   return v <= b.ideal ? 'saudavel' : v <= b.atencao ? 'atencao' : 'critico'
 }
 
+const TH = 'px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap'
+const TD = 'px-4 py-3 text-sm text-gray-700 dark:text-gray-300 align-middle'
+
 export default function CMV() {
-  const { ingredientes, receitas, receitaItens, vendas, estoque, funcionarios, dre } = useStore()
+  const store = useStore()
+  const { ingredientes, receitas, receitaItens, vendas, estoque, funcionarios, dre } = store
 
   const { cmvReal, cmvTeorico, rl, variancia } = useMemo(() => {
     const cmvReal = calcularCMVReal(estoque, ingredientes)
@@ -24,124 +24,96 @@ export default function CMV() {
     const cmo = calcularCMO(funcionarios)
     const { rl } = calcularDRE(dre, cmvReal, cmo)
     const rlSafe = rl || 1
-    const variancia = Math.abs(cmvReal - cmvTeorico) / rlSafe
-    return { cmvReal, cmvTeorico, rl: rlSafe, variancia }
+    return { cmvReal, cmvTeorico, rl: rlSafe, variancia: Math.abs(cmvReal - cmvTeorico) / rlSafe }
   }, [ingredientes, receitas, receitaItens, vendas, estoque, funcionarios, dre])
 
-  const cmvRealPct = cmvReal / rl
-  const cmvTeoPct  = cmvTeorico / rl
-  const varAbs     = Math.abs(cmvReal - cmvTeorico)
-  const statusReal = statusBench(cmvRealPct, BENCHMARKS.cmv)
+  const varAbs = Math.abs(cmvReal - cmvTeorico)
+  const statusReal = statusBench(cmvReal / rl, BENCHMARKS.cmv)
   const statusVar  = statusBench(variancia, BENCHMARKS.variancia)
 
-  const store = useStore()
-
   const pratoRows = useMemo(() =>
-    receitas.map((r) => {
+    receitas.map(r => {
       const custo = calcularCustoPrato(r.id, receitaItens, ingredientes)
-      const qtd   = vendas.find((v) => v.prato_id === r.id)?.qtd ?? 0
+      const qtd   = vendas.find(v => v.prato_id === r.id)?.qtd ?? 0
       const total = custo * qtd
       const recTotal = r.preco * qtd
-      const pct   = recTotal > 0 ? total / recTotal : 0
-      return { ...r, custo, qtd, total, pct }
+      return { ...r, custo, qtd, total, pct: recTotal > 0 ? total / recTotal : 0 }
     }), [receitas, receitaItens, ingredientes, vendas])
 
   return (
-    <div style={{ padding: 32 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>📉 CMV — Custo de Mercadoria Vendida</h2>
-        <button onClick={() => loadExcel().then(m => m.exportCMVExcel(store))} style={btnExport}>📊 Exportar Excel</button>
+    <div className="p-6 md:p-8 space-y-6 max-w-7xl">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">CMV — Custo de Mercadoria Vendida</h2>
+        <button onClick={() => loadExcel().then(m => m.exportCMVExcel(store))}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+          Exportar Excel
+        </button>
       </div>
 
-      {/* Cards de comparação */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 28, flexWrap: 'wrap' }}>
-        <Card
-          label="CMV Teórico"
-          value={fmtR(cmvTeorico)}
-          sub={`${fmtP(cmvTeoPct)} da Rec. Líquida`}
-          note="Calculado pelas fichas técnicas × vendas"
-          color={C.azul}
-          bg={C.azulL}
-        />
-        <Card
-          label="CMV Real"
-          value={fmtR(cmvReal)}
-          sub={`${fmtP(cmvRealPct)} da Rec. Líquida`}
-          note="Calculado pelo consumo real de estoque"
-          badge={<Badge status={statusReal} />}
-          color={C.preto}
-          bg={C.branco}
-        />
-        <Card
-          label="Variância (Desperdício)"
-          value={fmtR(varAbs)}
-          sub={`${fmtP(variancia)} da Rec. Líquida`}
-          note="Diferença entre CMV Real e Teórico"
-          badge={<Badge status={statusVar} />}
-          color={varAbs > 0 ? C.laranja : C.verde}
-          bg={varAbs > 0 ? '#FFF3E0' : C.verdeL}
-        />
+      {/* Cards comparativo */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl p-5">
+          <div className="text-xs font-semibold text-blue-500 dark:text-blue-400 uppercase tracking-wider mb-2">CMV Teorico</div>
+          <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">{fmtR(cmvTeorico)}</div>
+          <div className="text-xs text-blue-400 mt-1">{fmtP(cmvTeorico/rl)} da Rec. Liquida</div>
+          <div className="text-xs text-gray-400 mt-2">Calculado pelas fichas tecnicas x vendas</div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-5">
+          <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">CMV Real</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">{fmtR(cmvReal)}</div>
+          <div className="text-xs text-gray-400 mt-1">{fmtP(cmvReal/rl)} da Rec. Liquida</div>
+          <div className="mt-3"><Badge status={statusReal} /></div>
+          <div className="text-xs text-gray-400 mt-2">Calculado pelo consumo real de estoque</div>
+        </div>
+        <div className={`border rounded-xl p-5 ${varAbs > 0 ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-800' : 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800'}`}>
+          <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Variancia (Desperdicio)</div>
+          <div className={`text-2xl font-bold ${varAbs > 0 ? 'text-primary' : 'text-green-600 dark:text-green-400'}`}>{fmtR(varAbs)}</div>
+          <div className="text-xs text-gray-400 mt-1">{fmtP(variancia)} da Rec. Liquida</div>
+          <div className="mt-3"><Badge status={statusVar} /></div>
+          <div className="text-xs text-gray-400 mt-2">Diferenca entre CMV Real e Teorico</div>
+        </div>
       </div>
 
-      {/* Benchmark */}
-      <div style={{
-        background: C.branco, borderRadius: 10, padding: '16px 20px',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.06)', marginBottom: 24,
-        fontSize: 13, color: C.cinza3,
-        display: 'flex', gap: 32, flexWrap: 'wrap',
-      }}>
-        <span>Benchmark CMV: <strong style={{ color: C.preto }}>≤ {fmtP(BENCHMARKS.cmv.ideal)}</strong> (ideal) · ≤ {fmtP(BENCHMARKS.cmv.atencao)} (atenção)</span>
-        <span>Benchmark Variância: <strong style={{ color: C.preto }}>≤ {fmtP(BENCHMARKS.variancia.ideal)}</strong> (ideal) · ≤ {fmtP(BENCHMARKS.variancia.atencao)} (atenção)</span>
+      {/* Benchmarks */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm px-5 py-4 flex flex-wrap gap-6 text-sm text-gray-500 dark:text-gray-400">
+        <span>Benchmark CMV: <strong className="text-gray-900 dark:text-white">&lt;= {fmtP(BENCHMARKS.cmv.ideal)}</strong> (ideal) · &lt;= {fmtP(BENCHMARKS.cmv.atencao)} (atencao)</span>
+        <span>Benchmark Variancia: <strong className="text-gray-900 dark:text-white">&lt;= {fmtP(BENCHMARKS.variancia.ideal)}</strong> (ideal) · &lt;= {fmtP(BENCHMARKS.variancia.atencao)} (atencao)</span>
       </div>
 
       {/* CMV por prato */}
-      <div style={{ background: C.branco, borderRadius: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-        <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.cinza2}`, fontWeight: 700, fontSize: 15 }}>
-          CMV por Prato (Teórico)
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700 font-semibold text-gray-900 dark:text-white text-sm">
+          CMV por Prato (Teorico)
         </div>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: C.cinza }}>
-              {['Prato', 'Custo Unit.', 'Qtd. Vendida', 'CMV Total', 'Receita Total', '% CMV'].map((h) => (
-                <th key={h} style={thStyle}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {pratoRows.map((r, idx) => (
-              <tr key={r.id} style={{ borderTop: `1px solid ${C.cinza2}`, background: idx % 2 === 0 ? C.branco : '#FAFAFA' }}>
-                <td style={tdStyle}><strong>{r.nome}</strong></td>
-                <td style={tdStyle}>{fmtR(r.custo)}</td>
-                <td style={tdStyle}>{r.qtd}</td>
-                <td style={tdStyle}>{fmtR(r.total)}</td>
-                <td style={tdStyle}>{fmtR(r.preco * r.qtd)}</td>
-                <td style={{ ...tdStyle, fontWeight: 700, color: r.pct <= BENCHMARKS.cmv.ideal ? C.verde : r.pct <= BENCHMARKS.cmv.atencao ? C.laranja : C.verm }}>
-                  {fmtP(r.pct)}
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-900/50">
+                {['Prato','Custo Unit.','Qtd. Vendida','CMV Total','Receita Total','% CMV'].map(h => (
+                  <th key={h} className={TH}>{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {pratoRows.length === 0 && (
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400 dark:text-gray-500">Nenhum prato cadastrado.</td></tr>
+              )}
+              {pratoRows.map((r, idx) => (
+                <tr key={r.id} className={`border-t border-gray-100 dark:border-gray-700 ${idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900/30'}`}>
+                  <td className={`${TD} font-semibold text-gray-900 dark:text-white`}>{r.nome}</td>
+                  <td className={TD}>{fmtR(r.custo)}</td>
+                  <td className={TD}>{r.qtd}</td>
+                  <td className={TD}>{fmtR(r.total)}</td>
+                  <td className={TD}>{fmtR(r.preco * r.qtd)}</td>
+                  <td className={`${TD} font-bold ${r.pct <= BENCHMARKS.cmv.ideal ? 'text-green-600 dark:text-green-400' : r.pct <= BENCHMARKS.cmv.atencao ? 'text-primary' : 'text-red-600 dark:text-red-400'}`}>
+                    {fmtP(r.pct)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )
-}
-
-function Card({ label, value, sub, note, badge, color, bg }) {
-  return (
-    <div style={{ background: bg, borderRadius: 10, padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', flex: 1, minWidth: 200 }}>
-      <div style={{ fontSize: 12, color: C.cinza3, fontWeight: 600, marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 700, color }}>{value}</div>
-      <div style={{ fontSize: 12, color: C.cinza3, marginTop: 4 }}>{sub}</div>
-      {badge && <div style={{ marginTop: 8 }}>{badge}</div>}
-      {note && <div style={{ fontSize: 11, color: C.cinza3, marginTop: 6 }}>{note}</div>}
-    </div>
-  )
-}
-
-const thStyle = { padding: '10px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.cinza3, whiteSpace: 'nowrap' }
-const tdStyle = { padding: '10px 16px', fontSize: 13 }
-const btnExport = {
-  padding: '8px 16px', borderRadius: 6, border: `1px solid ${C.cinza2}`,
-  background: C.branco, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600,
 }

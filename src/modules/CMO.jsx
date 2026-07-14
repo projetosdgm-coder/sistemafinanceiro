@@ -1,10 +1,10 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import useStore from '../store/useStore'
-import { C } from '../styles/tokens'
 import { fmtR, fmtP } from '../utils/formatters'
 import { calcularCustoFuncionario, calcularCMO, calcularCMVReal, calcularDRE, MULT_CLT } from '../utils/calculations'
 import { BENCHMARKS } from '../utils/benchmarks'
 import Badge from '../components/Badge'
+import KpiCard from '../components/KpiCard'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Toast from '../components/Toast'
@@ -12,10 +12,12 @@ import Toast from '../components/Toast'
 const FIELDS = [
   { name: 'nome',    label: 'Nome',         type: 'text',   required: true },
   { name: 'cargo',   label: 'Cargo',        type: 'text',   required: true },
-  { name: 'regime',  label: 'Regime',       type: 'select', required: true,
-    options: ['CLT', 'PJ'] },
-  { name: 'salario', label: 'Salário Base', type: 'number', required: true, prefix: 'R$' },
+  { name: 'regime',  label: 'Regime',       type: 'select', required: true, options: ['CLT','PJ'] },
+  { name: 'salario', label: 'Salario Base', type: 'number', required: true, prefix: 'R$' },
 ]
+
+const TH = 'px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap'
+const TD = 'px-4 py-3 text-sm text-gray-700 dark:text-gray-300 align-middle'
 
 export default function CMO() {
   const { funcionarios, ingredientes, estoque, dre, addFuncionario, updateFuncionario, deleteFuncionario } = useStore()
@@ -28,127 +30,100 @@ export default function CMO() {
   const dreResult = useMemo(() => calcularDRE(dre, cmvReal, cmo), [dre, cmvReal, cmo])
   const rl = dreResult.rl || 1
   const cmoPct = cmo / rl
-  const status = cmoPct <= BENCHMARKS.cmo.ideal ? 'saudavel'
-    : cmoPct <= BENCHMARKS.cmo.atencao ? 'atencao' : 'critico'
+  const status = cmoPct <= BENCHMARKS.cmo.ideal ? 'saudavel' : cmoPct <= BENCHMARKS.cmo.atencao ? 'atencao' : 'critico'
 
   const handleSave = (data) => {
     const payload = { ...data, salario: parseFloat(data.salario) }
-    if (modal.data?.id) {
-      updateFuncionario(modal.data.id, payload)
-      setToast('Colaborador atualizado!')
-    } else {
-      addFuncionario({ ...payload, id: `e${Date.now()}` })
-      setToast('Colaborador adicionado!')
-    }
+    if (modal.data?.id) { updateFuncionario(modal.data.id, payload); setToast('Colaborador atualizado!') }
+    else { addFuncionario({ ...payload, id: `e${Date.now()}` }); setToast('Colaborador adicionado!') }
     setModal({ open: false, data: null })
   }
 
   return (
-    <div style={{ padding: 32 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>👥 CMO — Custo de Mão de Obra</h2>
-        <button onClick={() => setModal({ open: true, data: null })} style={btnPrimary}>
+    <div className="p-6 md:p-8 space-y-6 max-w-7xl">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">CMO — Custo de Mao de Obra</h2>
+        <button onClick={() => setModal({ open: true, data: null })}
+          className="px-4 py-2 rounded-lg bg-primary text-white font-bold text-sm hover:bg-primary-600 transition-colors cursor-pointer">
           + Novo Colaborador
         </button>
       </div>
 
-      {/* KPI */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
-        <KPI label="Total CMO" value={fmtR(cmo)} />
-        <KPI label="% Rec. Líquida" value={fmtP(cmoPct)} sub={<Badge status={status} />} />
-        <KPI label="Ideal do setor" value={`≤ ${fmtP(BENCHMARKS.cmo.ideal)}`} />
-        <KPI label="Colaboradores" value={funcionarios.length} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard label="Total CMO"       value={fmtR(cmo)} />
+        <KpiCard label="% Rec. Liquida"  value={fmtP(cmoPct)} sub={<Badge status={status} />} />
+        <KpiCard label="Ideal do setor"  value={`<= ${fmtP(BENCHMARKS.cmo.ideal)}`} />
+        <KpiCard label="Colaboradores"   value={funcionarios.length} />
       </div>
 
-      {/* Nota encargos CLT */}
-      <div style={{
-        background: '#FFF8E1', border: `1px solid #FFE082`, borderRadius: 8,
-        padding: '10px 16px', marginBottom: 16, fontSize: 13, color: '#5D4037',
-      }}>
-        ⚠️ Encargos CLT aplicados: {fmtP(MULT_CLT - 1)} sobre o salário base (INSS + FGTS + férias + 13º + outros).
+      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+        Encargos CLT aplicados: <strong>{fmtP(MULT_CLT - 1)}</strong> sobre o salario base (INSS + FGTS + ferias + 13o + outros).
       </div>
 
-      <div style={{ background: C.branco, borderRadius: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: C.cinza }}>
-              {['Nome', 'Cargo', 'Regime', 'Salário Base', 'Encargos', 'Custo Total', 'Ações'].map((h) => (
-                <th key={h} style={thStyle}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {funcionarios.length === 0 && (
-              <tr><td colSpan={7} style={{ padding: 24, textAlign: 'center', color: C.cinza3 }}>Nenhum colaborador cadastrado.</td></tr>
-            )}
-            {funcionarios.map((f, idx) => {
-              const enc = f.regime === 'CLT' ? f.salario * (MULT_CLT - 1) : 0
-              const total = calcularCustoFuncionario(f)
-              return (
-                <tr key={f.id} style={{ borderTop: `1px solid ${C.cinza2}`, background: idx % 2 === 0 ? C.branco : '#FAFAFA' }}>
-                  <td style={tdStyle}>{f.nome}</td>
-                  <td style={tdStyle}>{f.cargo}</td>
-                  <td style={tdStyle}>
-                    <span style={{
-                      padding: '2px 8px', borderRadius: 10, fontSize: 12, fontWeight: 600,
-                      background: f.regime === 'CLT' ? C.azulL : C.verdeL,
-                      color: f.regime === 'CLT' ? C.azul : C.verde,
-                    }}>{f.regime}</span>
-                  </td>
-                  <td style={tdStyle}>{fmtR(f.salario)}</td>
-                  <td style={{ ...tdStyle, color: C.cinza3 }}>{fmtR(enc)}</td>
-                  <td style={{ ...tdStyle, fontWeight: 700 }}>{fmtR(total)}</td>
-                  <td style={{ ...tdStyle, display: 'flex', gap: 6 }}>
-                    <button onClick={() => setModal({ open: true, data: f })} style={btnEdit}>✏️ Editar</button>
-                    <button onClick={() => setConfirm(f.id)} style={btnDel}>🗑️</button>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-          {funcionarios.length > 0 && (
-            <tfoot>
-              <tr style={{ borderTop: `2px solid ${C.cinza2}`, background: C.cinza, fontWeight: 700 }}>
-                <td style={tdStyle} colSpan={5}><strong>TOTAL CMO</strong></td>
-                <td style={tdStyle}><strong>{fmtR(cmo)}</strong></td>
-                <td />
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-900/50">
+                {['Nome','Cargo','Regime','Salario Base','Encargos','Custo Total','Acoes'].map(h => (
+                  <th key={h} className={TH}>{h}</th>
+                ))}
               </tr>
-            </tfoot>
-          )}
-        </table>
+            </thead>
+            <tbody>
+              {funcionarios.length === 0 && (
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-400 dark:text-gray-500">Nenhum colaborador cadastrado.</td></tr>
+              )}
+              {funcionarios.map((f, idx) => {
+                const enc = f.regime === 'CLT' ? f.salario * (MULT_CLT - 1) : 0
+                const total = calcularCustoFuncionario(f)
+                return (
+                  <tr key={f.id} className={`border-t border-gray-100 dark:border-gray-700 ${idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900/30'}`}>
+                    <td className={`${TD} font-medium text-gray-900 dark:text-white`}>{f.nome}</td>
+                    <td className={TD}>{f.cargo}</td>
+                    <td className={TD}>
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${f.regime === 'CLT' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'}`}>
+                        {f.regime}
+                      </span>
+                    </td>
+                    <td className={TD}>{fmtR(f.salario)}</td>
+                    <td className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500 align-middle">{fmtR(enc)}</td>
+                    <td className={`${TD} font-bold text-gray-900 dark:text-white`}>{fmtR(total)}</td>
+                    <td className={`${TD} flex gap-2`}>
+                      <button onClick={() => setModal({ open: true, data: f })}
+                        className="px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors cursor-pointer">
+                        Editar
+                      </button>
+                      <button onClick={() => setConfirm(f.id)}
+                        className="px-3 py-1.5 rounded-md border border-red-100 dark:border-red-900 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs hover:bg-red-100 transition-colors cursor-pointer">
+                        Excluir
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+            {funcionarios.length > 0 && (
+              <tfoot>
+                <tr className="bg-gray-50 dark:bg-gray-900/50 border-t-2 border-gray-200 dark:border-gray-600">
+                  <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-white" colSpan={5}>TOTAL CMO</td>
+                  <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-white">{fmtR(cmo)}</td>
+                  <td />
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
       </div>
 
-      <Modal
-        isOpen={modal.open}
-        title={modal.data ? 'Editar Colaborador' : 'Novo Colaborador'}
-        fields={FIELDS}
-        initialData={modal.data}
-        onSave={handleSave}
-        onClose={() => setModal({ open: false, data: null })}
-      />
+      <Modal isOpen={modal.open} title={modal.data ? 'Editar Colaborador' : 'Novo Colaborador'} fields={FIELDS} initialData={modal.data} onSave={handleSave} onClose={() => setModal({ open: false, data: null })} />
       <ConfirmDialog
         isOpen={!!confirm}
         message="Excluir este colaborador?"
-        onConfirm={() => { deleteFuncionario(confirm); setConfirm(null); setToast('Colaborador excluído!') }}
+        onConfirm={() => { deleteFuncionario(confirm); setConfirm(null); setToast('Colaborador excluido!') }}
         onCancel={() => setConfirm(null)}
       />
       <Toast message={toast} onDone={() => setToast('')} />
     </div>
   )
 }
-
-function KPI({ label, value, sub }) {
-  return (
-    <div style={{ background: C.branco, borderRadius: 10, padding: '18px 22px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', minWidth: 160 }}>
-      <div style={{ fontSize: 12, color: C.cinza3, fontWeight: 600, marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700 }}>{value}</div>
-      {sub && <div style={{ marginTop: 6 }}>{sub}</div>}
-    </div>
-  )
-}
-
-const btnPrimary = { padding: '9px 18px', borderRadius: 6, border: 'none', background: C.amarelo, color: C.preto, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 14 }
-const thStyle = { padding: '10px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.cinza3, whiteSpace: 'nowrap' }
-const tdStyle = { padding: '10px 16px', fontSize: 13, verticalAlign: 'middle' }
-const btnEdit = { padding: '4px 10px', borderRadius: 5, border: `1px solid ${C.cinza2}`, background: C.branco, cursor: 'pointer', fontSize: 12, fontFamily: 'inherit' }
-const btnDel  = { padding: '4px 8px',  borderRadius: 5, border: `1px solid ${C.vermL}`,  background: C.vermL,  cursor: 'pointer', fontSize: 12, fontFamily: 'inherit' }
