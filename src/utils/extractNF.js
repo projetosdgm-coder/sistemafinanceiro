@@ -44,21 +44,24 @@ function buildPromptNF(ingredientes) {
     .map(i => `  ${i.id}: "${i.nome}" (${i.un}) — R$ ${i.preco.toFixed(2)}`)
     .join('\n')
 
-  return `Voce e especialista em analise de notas fiscais para restaurantes brasileiros.
+  return `Voce e especialista em analise de documentos de compra para restaurantes brasileiros.
+
+O documento pode ser uma NOTA FISCAL (com itens discriminados) OU um COMPROVANTE DE PAGAMENTO (PIX, transferencia, boleto), que nao lista produtos.
 
 INGREDIENTES JA CADASTRADOS NO SISTEMA:
 ${lista}
 
-Analise esta nota fiscal e extraia todos os itens comprados.
+Analise o documento e extraia os itens comprados.
 Para cada item, tente encontrar a melhor correspondencia na lista acima pelo nome.
 
 Retorne APENAS um JSON valido neste formato:
 {
-  "fornecedor": "nome do fornecedor ou vazio",
+  "tipo_doc": "nota" ou "comprovante",
+  "fornecedor": "nome do fornecedor/destinatario ou vazio",
   "data": "DD/MM/AAAA ou vazio",
   "itens": [
     {
-      "nome_nota": "nome exato como aparece na nota",
+      "nome_nota": "nome exato como aparece no documento",
       "ing_id": "id do ingrediente correspondente ou null",
       "qtd": 10.5,
       "un": "kg",
@@ -69,8 +72,8 @@ Retorne APENAS um JSON valido neste formato:
 }
 
 Regras:
-- Converta gramas para kg (500g = qtd:0.5, un:"kg") e ml para L
-- Ignore impostos, descontos e totais gerais
+- Se for NOTA FISCAL: extraia todos os itens. Converta gramas para kg (500g = qtd:0.5, un:"kg") e ml para L. Ignore impostos, descontos e totais gerais.
+- Se for COMPROVANTE DE PAGAMENTO (sem itens discriminados): retorne UM UNICO item representando o pagamento inteiro, com nome_nota = descricao/destinatario do pagamento, ing_id: null, qtd: 1, un: "un", precoUnit e precoTotal = valor total pago. O usuario vai detalhar depois o que foi comprado.
 - Se nao encontrar correspondencia pelo nome, deixe ing_id como null
 - Use ponto decimal nos numeros (sem R$ ou virgulas)`
 }

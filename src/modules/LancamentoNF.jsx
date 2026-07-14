@@ -5,6 +5,17 @@ import { fmtR } from '../utils/formatters'
 const UNS  = ['un','kg','g','L','ml','cx','pc','fd','lt','sc']
 const ACCEPT = '.jpg,.jpeg,.png,.pdf,.heic,.heif'
 
+const blankItem = (seed = {}) => ({
+  nome_nota: seed.nome_nota ?? '',
+  ing_id: null,
+  qtd: seed.qtd ?? 1,
+  un: seed.un ?? 'un',
+  precoUnit: seed.precoUnit ?? 0,
+  precoTotal: seed.precoTotal ?? 0,
+  incluir: true,
+  nome_novo: seed.nome_novo ?? seed.nome_nota ?? '',
+})
+
 function DropZone({ onFile, title, subtitle, icon }) {
   const [drag, setDrag] = useState(false)
   const ref = useRef()
@@ -31,10 +42,10 @@ function DropZone({ onFile, title, subtitle, icon }) {
 function TelaUpload({ onFile }) {
   return (
     <div className="max-w-lg mx-auto p-8 space-y-6">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white">Lancamento por Nota Fiscal</h2>
-      <DropZone onFile={onFile} icon="📎" subtitle="JPG · PNG · PDF · HEIC (foto de iPhone)" />
+      <h2 className="text-xl font-bold text-gray-900 dark:text-white">Lancamento por Nota ou Comprovante</h2>
+      <DropZone onFile={onFile} icon="📎" subtitle="Nota fiscal ou comprovante PIX · JPG · PNG · PDF · HEIC" />
       <div className="bg-gray-50 dark:bg-gray-700 rounded-lg px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-        <strong className="text-gray-700 dark:text-gray-300">Como funciona:</strong> A IA le a nota, identifica os ingredientes e apresenta um resumo para confirmar antes de importar.
+        <strong className="text-gray-700 dark:text-gray-300">Como funciona:</strong> A IA le a nota fiscal e identifica os ingredientes automaticamente. Comprou algo no PIX sem nota? Envie o comprovante e detalhe manualmente o que foi comprado antes de importar.
       </div>
     </div>
   )
@@ -50,11 +61,13 @@ function TelaAnalisando({ fileName }) {
   )
 }
 
-function TelaConfirmacao({ resultado, itens, setItens, ingredientes, onConfirmar, onCancelar, loading }) {
+function TelaConfirmacao({ resultado, itens, setItens, ingredientes, onAddItem, onConfirmar, onCancelar, loading }) {
   const updateItem = (idx, campo, valor) =>
     setItens(prev => prev.map((it, i) => i === idx ? { ...it, [campo]: valor } : it))
+  const removeItem = (idx) => setItens(prev => prev.filter((_, i) => i !== idx))
   const total = itens.filter(i => i.incluir).reduce((s, i) => s + (parseFloat(i.precoTotal) || 0), 0)
   const novos = itens.filter(i => i.incluir && !i.ing_id).length
+  const isComprovante = resultado.tipo_doc === 'comprovante'
 
   return (
     <div className="p-6 md:p-8 space-y-5 max-w-5xl">
@@ -69,6 +82,12 @@ function TelaConfirmacao({ resultado, itens, setItens, ingredientes, onConfirmar
         <button onClick={onCancelar} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl bg-transparent border-none cursor-pointer">✕</button>
       </div>
 
+      {isComprovante && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3 text-sm text-blue-800 dark:text-blue-300">
+          <strong>Comprovante de pagamento</strong> — sem itens discriminados. Detalhe abaixo o que foi comprado (ajuste o nome, quantidade e unidade, e divida em varios itens se precisar com <strong>+ Adicionar item</strong>).
+        </div>
+      )}
+
       <div className="flex gap-3 flex-wrap">
         <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400">Ingrediente casado</span>
         <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">Ingrediente novo</span>
@@ -80,8 +99,8 @@ function TelaConfirmacao({ resultado, itens, setItens, ingredientes, onConfirmar
           <table className="w-full border-collapse text-xs">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-900/50">
-                {['','Item na Nota','Ingrediente no Sistema','Qtd','Un','Preco Unit.','Total'].map(h => (
-                  <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                {['','Item na Nota','Ingrediente no Sistema','Qtd','Un','Preco Unit.','Total',''].map((h, i) => (
+                  <th key={i} className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -129,6 +148,10 @@ function TelaConfirmacao({ resultado, itens, setItens, ingredientes, onConfirmar
                       className="w-full px-2 py-1 rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs text-right focus:outline-none" />
                   </td>
                   <td className="px-3 py-2 font-semibold text-gray-900 dark:text-white w-24">{fmtR(item.precoTotal)}</td>
+                  <td className="px-3 py-2 w-8 text-center">
+                    <button onClick={() => removeItem(idx)} title="Remover linha"
+                      className="text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 text-base leading-none bg-transparent border-none cursor-pointer">✕</button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -137,9 +160,16 @@ function TelaConfirmacao({ resultado, itens, setItens, ingredientes, onConfirmar
                 <td colSpan={5} className="px-3 py-2" />
                 <td className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">Total:</td>
                 <td className="px-3 py-2 text-sm font-bold text-green-600 dark:text-green-400">{fmtR(total)}</td>
+                <td />
               </tr>
             </tfoot>
           </table>
+        </div>
+        <div className="px-3 py-2.5 border-t border-gray-100 dark:border-gray-700">
+          <button onClick={onAddItem}
+            className="px-3 py-1.5 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 text-xs font-semibold hover:border-primary hover:text-primary transition-colors cursor-pointer">
+            + Adicionar item
+          </button>
         </div>
       </div>
 
@@ -210,7 +240,9 @@ export default function LancamentoNF({ onNav }) {
       const { analisarNF } = await import('../utils/extractNF')
       const res = await analisarNF(f, ingredientes)
       setResultado(res)
-      setItens((res.itens || []).map(item => ({ ...item, incluir: true, nome_novo: item.nome_nota })))
+      const mapped = (res.itens || []).map(item => ({ ...item, incluir: true, nome_novo: item.nome_nota }))
+      // Comprovante sem itens lidos: garante ao menos uma linha para o usuario detalhar
+      setItens(mapped.length ? mapped : [blankItem()])
       setStatus('confirmando')
     } catch (e) { setErro(e.message); setStatus('upload') }
   }
@@ -249,7 +281,7 @@ export default function LancamentoNF({ onNav }) {
       )}
       {status === 'upload'      && <TelaUpload onFile={handleFile} />}
       {status === 'analisando'  && <TelaAnalisando fileName={file?.name} />}
-      {status === 'confirmando' && <TelaConfirmacao resultado={resultado} itens={itens} setItens={setItens} ingredientes={ingredientes} onConfirmar={handleConfirmar} onCancelar={resetar} loading={loadingConfirm} />}
+      {status === 'confirmando' && <TelaConfirmacao resultado={resultado} itens={itens} setItens={setItens} ingredientes={ingredientes} onAddItem={() => setItens(prev => [...prev, blankItem()])} onConfirmar={handleConfirmar} onCancelar={resetar} loading={loadingConfirm} />}
       {status === 'sucesso'     && <TelaSucesso stats={stats} onNova={resetar} onVerEstoque={() => onNav('estoque')} />}
     </div>
   )
